@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+EXEC SQL INCLUDE sqlca;
+EXEC SQL BEGIN DECLARE SECTION;
+int id_parque;
+int id_ubicacion;
+char nombre[51];
+int capacidad_maxima_diaria;
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL WHENEVER SQLERROR SQLPRINT;
+EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+EXEC SQL WHENEVER NOT FOUND SQLPRINT;
+
+int main()
+{
+
+    EXEC SQL CONNECT TO lab02@172.0.0.1:5434 USER usuario;
+    if (sqlca.sqlcode != 0)
+    {
+        printf("Error connecting to the database: %d\n", sqlca.sqlcode);
+        printf("Mensaje:" "%s\n", sqlca.sqlerrm.sqlerrmc);
+        printf("SQLSTATE: %s\n", sqlca.sqlstate);
+        printf("SQLERRD: %ld %ld %ld %ld %ld %ld\n",
+            sqlca.sqlerrd[0], sqlca.sqlerrd[1], sqlca.sqlerrd[2],
+            sqlca.sqlerrd[3], sqlca.sqlerrd[4], sqlca.sqlerrd[5]);
+        printf("SQLWARN: %.8s\n", sqlca.sqlwarn);
+        exit(1);
+    }
+
+    EXEC SQL DECLARE cursor_parque CURSOR FOR SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria FROM parques;
+    EXEC SQL WHENEVER NOT FOUND DO BREAK;
+    EXEC SQL OPEN cursor_parque;
+    while (1)
+    {
+        EXEC SQL FETCH cursor_parque INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria;
+        if (sqlca.sqlcode != 0)
+        {
+            if (sqlca.sqlcode == 100)
+            { // No more rows
+                break;
+            }
+            else
+            {
+                printf("Error fetching data: %d\n", sqlca.sqlcode);
+                exit(1);
+            }
+        }
+        printf("Parque ID: %d, Ubicacion ID: %d, Nombre: %s, Capacidad Maxima Diaria: %d\n",
+               id_parque, id_ubicacion, nombre, capacidad_maxima_diaria);
+    }
+    EXEC SQL CLOSE cursor_parque;
+    EXEC SQL DISCONNECT;
+    return 0;
+}

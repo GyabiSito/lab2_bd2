@@ -15,7 +15,7 @@ services:
     environment: #variables de entorno
       - POSTGRES_USER=usuario
       - POSTGRES_PASSWORD=12345678
-      - POSTGRES_DB=laboratorio
+      - POSTGRES_DB=lab02
     volumes:
       - ./postgres:/var/lib/postgresql/data #Crea un directorio para almacenar físicamente la base de datos
       - ./init-scripts:/docker-entrypoint-initdb.d # Aquí se montan los scripts SQL
@@ -44,5 +44,6 @@ services:
     container_name: c_app
     volumes:
       - ./app:/app
+      - ./compilar.sh:/app/compilar.sh   # <--- esta línea monta el script
     stdin_open: true
     tty: true

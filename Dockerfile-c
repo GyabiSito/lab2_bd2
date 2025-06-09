@@ -2,4 +2,10 @@ FROM gcc:latest
 
 WORKDIR /app
 
-CMD ["bash"]
+COPY init.sh /init.sh
+COPY compilar.sh /app/compilar.sh
+
+RUN chmod +x /init.sh
+RUN chmod +x /app/compilar.sh
+
+CMD ["/bin/bash", "-c", "/init.sh && bash"]
