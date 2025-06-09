@@ -42,5 +42,5 @@ gcc -o menu main.c
 ./menu
 ```
 
-> **Nota:** Cuando tengas más archivos, será recomendable crear un `Makefile` para facilitar la compilación.
+> **Nota:** Cuando tengamos más archivos, será recomendable crear un `Makefile` para facilitar la compilación.
 

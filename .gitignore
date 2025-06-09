@@ -1,4 +1,2 @@
-./pgadmin
-./postgres
-
-
+pgadmin/
+postgres/
