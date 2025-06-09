@@ -1,0 +1,48 @@
+# La configuración en este archivo son instrucciones que permiten levantar dos contenedores:
+# Uno es Postgres y el otro es PGAdmin.
+# Los volumenes son opcionales, pero los creamos para disponer de la data en caso que borremos el contenedor y volvamos a crearlo
+# Para ejecutar (si docker está corriendo):  docker compose up -d 
+# El parámetro -d en el comando docker compose up -d significa "detached mode", es decir, ejecutar los contenedores en segundo plano. 
+# Para finalizar: docker compose down
+
+services:
+  My-Postgres:
+    image: postgres:latest #La imagen de la base de datos
+    container_name: contenedor-postgres
+    restart: always
+    ports:
+      - 5434:5432 #puerto en mi máquina y en el contenedor
+    environment: #variables de entorno
+      - POSTGRES_USER=usuario
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_DB=laboratorio
+    volumes:
+      - ./postgres:/var/lib/postgresql/data #Crea un directorio para almacenar físicamente la base de datos
+      - ./init-scripts:/docker-entrypoint-initdb.d # Aquí se montan los scripts SQL
+
+  
+  My-pdAdmin:
+    image: dpage/pgadmin4 #La imagen de PGAdmin
+    container_name: pgadmin4
+    restart: always
+    depends_on:
+      - My-Postgres #Depende del contenedor de arriba, es decir que tiene que levantarse el anterior para que este funcione
+    ports:
+      - 8081:80 #puerto 8088 de mi máquina con el 80 del contendedor
+    environment: #variables de entorno
+      - PGADMIN_DEFAULT_EMAIL=usuario@usuario.com
+      - PGADMIN_DEFAULT_PASSWORD=12345678
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+      - ./pgadmin:/certs/server.cert
+      - ./pgadmin:/certs/server.key
+      - ./pgadmin:/pgadmin4/servers.json
+  my-c-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-c
+    container_name: c_app
+    volumes:
+      - ./app:/app
+    stdin_open: true
+    tty: true
