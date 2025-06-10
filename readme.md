@@ -3,9 +3,7 @@ Dentro del contenedor, instala las dependencias necesarias (si no están instala
 
 Ya deberian de estar instaladas debido al Dockerfile
 ```bash
-apt update
-apt upgrade
-apt-get install -y postgresql-contrib build-essential libecpg-dev
+apt-get update && apt-get install -y libecpg-dev postgresql-client postgresql-contrib build-essential vim net-tools iputils-ping
 ```
 
 # Levantar los Contenedores
@@ -23,7 +21,7 @@ docker-compose up --build -d
 Para acceder a la terminal del contenedor de la aplicación C:
 
 ```bash
-docker exec -it c_app /bin/bash
+docker exec -it contenedor-postgres /bin/bash
 ```
 
 O para cualquier contenedor, usa:
@@ -54,7 +52,7 @@ Estos comandos están automatizados en el script `./compilar.sh`.
 Compila el archivo fuente `.pgc` y el programa principal:
 ```bash
 ecpg main.pgc
-gcc -I/usr/include/postgresql -o main main.c -lecpg
+gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
 ```
 
 > **Nota:** Cuando tengamos más archivos, será recomendable crear un `Makefile` para facilitar la compilación.

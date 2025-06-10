@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "db_singleton.h"
 
 EXEC SQL INCLUDE sqlca;
 EXEC SQL BEGIN DECLARE SECTION;
@@ -11,46 +12,44 @@ EXEC SQL END DECLARE SECTION;
 
 EXEC SQL WHENEVER SQLERROR SQLPRINT;
 EXEC SQL WHENEVER SQLWARNING SQLPRINT;
-EXEC SQL WHENEVER NOT FOUND SQLPRINT;
 
 int main()
 {
-
-    EXEC SQL CONNECT TO lab02@172.0.0.1:5434 USER usuario;
-    if (sqlca.sqlcode != 0)
-    {
-        printf("Error connecting to the database: %d\n", sqlca.sqlcode);
-        printf("Mensaje:" "%s\n", sqlca.sqlerrm.sqlerrmc);
-        printf("SQLSTATE: %s\n", sqlca.sqlstate);
-        printf("SQLERRD: %ld %ld %ld %ld %ld %ld\n",
-            sqlca.sqlerrd[0], sqlca.sqlerrd[1], sqlca.sqlerrd[2],
-            sqlca.sqlerrd[3], sqlca.sqlerrd[4], sqlca.sqlerrd[5]);
-        printf("SQLWARN: %.8s\n", sqlca.sqlwarn);
-        exit(1);
+    // Llama al singleton para obtener la conexión activa
+    DBSingleton* db = getInstance();
+    if (!db || !db->conectado) {
+        printf("No se pudo conectar a la base de datos.\n");
+        return 1;
     }
 
-    EXEC SQL DECLARE cursor_parque CURSOR FOR SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria FROM parques;
-    EXEC SQL WHENEVER NOT FOUND DO BREAK;
+    EXEC SQL DECLARE cursor_parque CURSOR FOR
+        SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria FROM parques;
+
     EXEC SQL OPEN cursor_parque;
+
     while (1)
     {
         EXEC SQL FETCH cursor_parque INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria;
         if (sqlca.sqlcode != 0)
         {
             if (sqlca.sqlcode == 100)
-            { // No more rows
-                break;
+            {
+                break; // Fin del cursor
             }
             else
             {
-                printf("Error fetching data: %d\n", sqlca.sqlcode);
+                printf("Error al obtener datos: %d\n", sqlca.sqlcode);
+                cerrar_conexion(); // Cierra conexión antes de salir
                 exit(1);
             }
         }
-        printf("Parque ID: %d, Ubicacion ID: %d, Nombre: %s, Capacidad Maxima Diaria: %d\n",
+
+        printf("Parque ID: %d, Ubicación ID: %d, Nombre: %s, Capacidad Máxima Diaria: %d\n",
                id_parque, id_ubicacion, nombre, capacidad_maxima_diaria);
     }
+
     EXEC SQL CLOSE cursor_parque;
-    EXEC SQL DISCONNECT;
+
+    cerrar_conexion(); // Desconectar y limpiar al final
     return 0;
 }

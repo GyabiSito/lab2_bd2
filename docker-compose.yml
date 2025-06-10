@@ -19,6 +19,8 @@ services:
     volumes:
       - ./postgres:/var/lib/postgresql/data #Crea un directorio para almacenar físicamente la base de datos
       - ./init-scripts:/docker-entrypoint-initdb.d # Aquí se montan los scripts SQL
+      - ./app:/app
+      - ./compilar.sh:/app/compilar.sh   # <--- esta línea monta el script
 
   
   My-pdAdmin:
@@ -37,13 +39,3 @@ services:
       - ./pgadmin:/certs/server.cert
       - ./pgadmin:/certs/server.key
       - ./pgadmin:/pgadmin4/servers.json
-  my-c-app:
-    build:
-      context: .
-      dockerfile: Dockerfile-c
-    container_name: c_app
-    volumes:
-      - ./app:/app
-      - ./compilar.sh:/app/compilar.sh   # <--- esta línea monta el script
-    stdin_open: true
-    tty: true

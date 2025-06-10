@@ -1,4 +1,4 @@
-/* Processed by ecpg (15.13 (Debian 15.13-0+deb12u1)) */
+/* Processed by ecpg (17.5 (Debian 17.5-1.pgdg120+1)) */
 /* These include files are added by the preprocessor */
 #include <ecpglib.h>
 #include <ecpgerrno.h>
@@ -8,6 +8,7 @@
 #line 1 "main.pgc"
 #include <stdio.h>
 #include <stdlib.h>
+#include "db_singleton.h"
 
 
 #line 1 "/usr/include/postgresql/sqlca.h"
@@ -78,7 +79,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 #endif
 
-#line 4 "main.pgc"
+#line 5 "main.pgc"
 
 /* exec sql begin declare section */
  
@@ -86,69 +87,50 @@ struct sqlca_t *ECPGget_sqlca(void);
  
  
 
-#line 6 "main.pgc"
+#line 7 "main.pgc"
  int id_parque ;
  
-#line 7 "main.pgc"
+#line 8 "main.pgc"
  int id_ubicacion ;
  
-#line 8 "main.pgc"
+#line 9 "main.pgc"
  char nombre [ 51 ] ;
  
-#line 9 "main.pgc"
+#line 10 "main.pgc"
  int capacidad_maxima_diaria ;
 /* exec sql end declare section */
-#line 10 "main.pgc"
+#line 11 "main.pgc"
 
 
 /* exec sql whenever sqlerror  sqlprint ; */
-#line 12 "main.pgc"
-
-/* exec sql whenever sql_warning  sqlprint ; */
 #line 13 "main.pgc"
 
-/* exec sql whenever not found  sqlprint ; */
+/* exec sql whenever sql_warning  sqlprint ; */
 #line 14 "main.pgc"
 
 
 int main()
 {
-
-    { ECPGconnect(__LINE__, 0, "lab02@172.0.0.1:5434" , "usuario" , NULL , NULL, 0); 
-#line 19 "main.pgc"
-
-if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 19 "main.pgc"
-
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 19 "main.pgc"
-
-    if (sqlca.sqlcode != 0)
-    {
-        printf("Error connecting to the database: %d\n", sqlca.sqlcode);
-        printf("Mensaje:" "%s\n", sqlca.sqlerrm.sqlerrmc);
-        printf("SQLSTATE: %s\n", sqlca.sqlstate);
-        printf("SQLERRD: %ld %ld %ld %ld %ld %ld\n",
-            sqlca.sqlerrd[0], sqlca.sqlerrd[1], sqlca.sqlerrd[2],
-            sqlca.sqlerrd[3], sqlca.sqlerrd[4], sqlca.sqlerrd[5]);
-        printf("SQLWARN: %.8s\n", sqlca.sqlwarn);
-        exit(1);
+    // Llama al singleton para obtener la conexión activa
+    DBSingleton* db = getInstance();
+    if (!db || !db->conectado) {
+        printf("No se pudo conectar a la base de datos.\n");
+        return 1;
     }
 
     /* declare cursor_parque cursor for select id_parque , id_ubicacion , nombre , capacidad_maxima_diaria from parques */
-#line 32 "main.pgc"
+#line 26 "main.pgc"
 
-    /* exec sql whenever not found  break ; */
-#line 33 "main.pgc"
 
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare cursor_parque cursor for select id_parque , id_ubicacion , nombre , capacidad_maxima_diaria from parques", ECPGt_EOIT, ECPGt_EORT);
-#line 34 "main.pgc"
+#line 28 "main.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 34 "main.pgc"
+#line 28 "main.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 34 "main.pgc"
+#line 28 "main.pgc"
+
 
     while (1)
     {
@@ -161,49 +143,42 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(capacidad_maxima_diaria),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 37 "main.pgc"
-
-if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
-#line 37 "main.pgc"
+#line 32 "main.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 37 "main.pgc"
+#line 32 "main.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 37 "main.pgc"
+#line 32 "main.pgc"
 
         if (sqlca.sqlcode != 0)
         {
             if (sqlca.sqlcode == 100)
-            { // No more rows
-                break;
+            {
+                break; // Fin del cursor
             }
             else
             {
-                printf("Error fetching data: %d\n", sqlca.sqlcode);
+                printf("Error al obtener datos: %d\n", sqlca.sqlcode);
+                cerrar_conexion(); // Cierra conexión antes de salir
                 exit(1);
             }
         }
-        printf("Parque ID: %d, Ubicacion ID: %d, Nombre: %s, Capacidad Maxima Diaria: %d\n",
+
+        printf("Parque ID: %d, Ubicación ID: %d, Nombre: %s, Capacidad Máxima Diaria: %d\n",
                id_parque, id_ubicacion, nombre, capacidad_maxima_diaria);
     }
+
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close cursor_parque", ECPGt_EOIT, ECPGt_EORT);
-#line 53 "main.pgc"
+#line 51 "main.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 53 "main.pgc"
+#line 51 "main.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 53 "main.pgc"
+#line 51 "main.pgc"
 
-    { ECPGdisconnect(__LINE__, "CURRENT");
-#line 54 "main.pgc"
 
-if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 54 "main.pgc"
-
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 54 "main.pgc"
-
+    cerrar_conexion(); // Desconectar y limpiar al final
     return 0;
 }
