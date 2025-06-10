@@ -30,6 +30,7 @@ int main()
     while (1)
     {
         EXEC SQL FETCH cursor_parque INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria;
+
         if (sqlca.sqlcode != 0)
         {
             if (sqlca.sqlcode == 100)
@@ -43,13 +44,45 @@ int main()
                 exit(1);
             }
         }
+        
+        
+        mostrarMenu();
+        int opcion;
+        scanf("%d", &opcion);
+        switch (opcion) {
+            case 1:
+                printf("Venta de entradas para el parque %s (ID: %d)\n", nombre, id_parque);
+                // Aquí iría la lógica para la venta de entradas
+                break;
+            case 2:
+                printf("Validar Entrada para el parque %s (ID: %d)\n", nombre, id_parque);
+                // Aquí iría la lógica para validar entradas
+                break;
+            case 3:
+                printf("Total Recaudado Mes o Año para el parque %s (ID: %d)\n", nombre, id_parque);
+                // Aquí iría la lógica para calcular el total recaudado
+                break;
+            case 0:
+                printf("Saliendo del programa...\n");
+                cerrar_conexion(); // Cierra conexión antes de salir
+                return 0;
+            default:
+                printf("Opción no válida. Intente nuevamente.\n");
+        }
 
-        printf("Parque ID: %d, Ubicación ID: %d, Nombre: %s, Capacidad Máxima Diaria: %d\n",
-               id_parque, id_ubicacion, nombre, capacidad_maxima_diaria);
     }
 
     EXEC SQL CLOSE cursor_parque;
 
     cerrar_conexion(); // Desconectar y limpiar al final
     return 0;
+}
+
+void mostrarMenu()
+{
+    printf("Seleccione una opción: \n");
+    printf("1. Venta de entradas\n");
+    printf("2. Validar Entrada\n");
+    printf("3. Total Recaudado Mes o Año \n");
+    printf("0. Salir\n");
 }
