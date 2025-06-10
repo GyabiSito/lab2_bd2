@@ -1,6 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include "db_singleton.h"
+
+#include "db.h"
 
 EXEC SQL INCLUDE sqlca;
 

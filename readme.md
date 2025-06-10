@@ -57,3 +57,47 @@ gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
 
 > **Nota:** Cuando tengamos más archivos, será recomendable crear un `Makefile` para facilitar la compilación.
 
+
+
+/*
+
+INICIAR VENTA
+
+REPETIR
+    MOSTRAR PARQUES DISPONIBLES
+    INGRESAR ID_PARQUE
+    INGRESAR FECHA
+
+    INGRESAR CANTIDAD_ENTRADAS
+    VALIDAR CAPACIDAD PARQUE
+
+    SI CAPACIDAD_OK
+        PREGUNTAR: ¿DESEA PARKING? (S/N)
+        SI SÍ:
+            INGRESAR CANTIDAD_VEHICULOS
+            VALIDAR CAPACIDAD ESTACIONAMIENTO
+        SINO:
+            CANTIDAD_VEHICULOS = 0
+
+        INGRESAR DATOS VISITANTES (NOMBRE, CÉDULA) x CANTIDAD_ENTRADAS
+
+        CALCULAR PRECIO TOTAL (entradas + parking)
+        MOSTRAR RESUMEN
+        PREGUNTAR CONFIRMACIÓN
+
+        SI CONFIRMADO
+            INGRESAR DATOS TARJETA
+            INSERTAR EN BASE DE DATOS
+            MOSTRAR CÓDIGOS QR
+        FIN SI
+    SINO
+        MOSTRAR "SIN CUPOS"
+    FIN SI
+
+    PREGUNTAR: ¿DESEA INGRESAR OTRA VENTA?
+HASTA QUE RESPUESTA SEA "NO"
+
+VOLVER A MENÚ
+
+
+*/

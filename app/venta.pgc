@@ -1,0 +1,42 @@
+#include "venta.h"
+
+
+void realizarVenta() {
+    int id_parque;
+    int cantidad_entradas;
+    int cantidad_vehiculos;
+    char deseaParking;
+    char fecha[11]; // formato YYYY-MM-DD
+
+    printf("Ingrese ID del parque: ");
+    scanf("%d", &id_parque);
+
+    printf("Ingrese fecha (YYYY-MM-DD): ");
+    scanf("%10s", fecha);  // ✅ sin asterisco
+
+    printf("Ingrese cantidad de entradas: ");
+    scanf("%d", &cantidad_entradas);
+
+    if (!validarCapacidadParque(id_parque, fecha, cantidad_entradas)) {
+        printf("No hay capacidad disponible.\n");
+        return;
+    }
+
+    printf("¿Desea parking? (S/N): ");
+    scanf(" %c", &deseaParking);  // espacio para consumir enter anterior
+
+    if (deseaParking == 'S' || deseaParking == 's') {
+        printf("Ingrese cantidad de vehículos: ");
+        scanf("%d", &cantidad_vehiculos);
+
+        if (!validarCapacidadParking(id_parque, fecha, cantidad_vehiculos)) {
+            printf("No hay espacio de parking disponible.\n");
+            return;
+        }
+    } else {
+        cantidad_vehiculos = 0;
+    }
+
+    // Aquí continuarías con lógica de ingreso de visitante, pago, etc.
+    printf("Venta registrada (simulada).\n");
+}

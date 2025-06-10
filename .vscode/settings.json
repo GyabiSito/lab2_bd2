@@ -1,6 +1,9 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "*.pgc": "cpp"
+        "*.embeddedhtml": "html",
+        "*.pgc": "c",
+        "string": "c",
+        "structs.h": "c"
     }
 }
