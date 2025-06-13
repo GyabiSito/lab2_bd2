@@ -1,0 +1,62 @@
+#include "utils.h"
+
+int obtenerDiasDelMes(int mes, int anio) {
+    switch (mes) {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+            return 31;
+        case 4: case 6: case 9: case 11:
+            return 30;
+        case 2:
+            // Año bisiesto
+            if ((anio % 4 == 0 && anio % 100 != 0) || (anio % 400 == 0))
+                return 29;
+            else
+                return 28;
+        default:
+            return 0;
+    }
+}
+void imprimirMeses() {
+    printf("1. Enero\n");
+    printf("2. Febrero\n");
+    printf("3. Marzo\n");
+    printf("4. Abril\n");
+    printf("5. Mayo\n");
+    printf("6. Junio\n");
+    printf("7. Julio\n");
+    printf("8. Agosto\n");
+    printf("9. Septiembre\n");
+    printf("10. Octubre\n");
+    printf("11. Noviembre\n");
+    printf("12. Diciembre\n");
+}
+
+
+
+bool esCedulaValida(const char *cedula) {
+    if (strlen(cedula) != 8){
+        printf("La cédula debe tener exactamente 8 dígitos.\n");
+        return false;
+    }
+
+    for (int i = 0; i < 8; i++) {
+        if (!isdigit((unsigned char)cedula[i])){
+            printf("La cédula solo debe contener dígitos.\n");
+            return false;
+        }
+    }
+
+    if(!existeCiVisitante(cedula)) {
+        printf("La cédula no existe en la base de datos.\n");
+        return false;
+    }
+    return true;
+}
+
+bool esMesValido(int mes) {
+    if(mes < 1 || mes > 12) {
+        printf("Mes inválido. Debe estar entre 1 y 12.\n");
+        return false;
+    }
+    return true;
+}

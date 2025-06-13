@@ -4,12 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "db.h"
-#include "venta.h"
-#include "validacion.h"
-
-
+#include "utils.h"
+#define ANIO_2025 2025
 int main();
 void mostrarMenu();
-
+void realizarVenta();
+void validarEntradas();
 
 #endif // MAIN_H

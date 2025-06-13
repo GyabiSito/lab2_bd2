@@ -9,6 +9,8 @@ int id_parque;
 int id_ubicacion;
 char nombre[51];
 int capacidad_maxima_diaria;
+int cedula_visitante;
+
 EXEC SQL END DECLARE SECTION;
 
 
@@ -24,12 +26,15 @@ int main()
     EXEC SQL DECLARE cursor_parque CURSOR FOR
         SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria FROM parques;
 
-    EXEC SQL OPEN cursor_parque;
+    EXEC SQL DECLARE cursor_ci_visitante CURSOR FOR
+        SELECT ci FROM visitantes;
 
+    EXEC SQL OPEN cursor_parque;
+    EXEC SQL OPEN cursor_ci_visitante;
     while (1)
     {
         EXEC SQL FETCH cursor_parque INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria;
-
+        EXEC SQL FETCH cursor_ci_visitante INTO :cedula_visitante;
         if (sqlca.sqlcode != 0)
         {
             if (sqlca.sqlcode == 100)
@@ -44,8 +49,8 @@ int main()
                 exit(1);
             }
         }
-        printf("Parque ID: %d", id_parque);
-        
+        printf("Parque ID: %d\n", id_parque);
+        printf("cedula visitante: %d\n", cedula_visitante);
         
         mostrarMenu();
         int opcion;
@@ -57,8 +62,7 @@ int main()
                 // Aquí iría la lógica para la venta de entradas
                 break;
             case 2:
-                printf("Validar Entrada para el parque %s (ID: %d)\n", nombre, id_parque);
-                // Aquí iría la lógica para validar entradas
+                validarEntradas();
                 break;
             case 3:
                 printf("Total Recaudado Mes o Año para el parque %s (ID: %d)\n", nombre, id_parque);
@@ -75,7 +79,7 @@ int main()
     }
 
     EXEC SQL CLOSE cursor_parque;
-
+    EXEC SQL CLOSE cursor_ci_visitante;
     cerrar_conexion(); // Desconectar y limpiar al final
     return 0;
 }
@@ -88,6 +92,75 @@ void mostrarMenu()
     printf("3. Total Recaudado Mes o Año \n");
     printf("0. Salir\n");
 }
+
+void realizarVenta() {
+    int id_parque;
+    int cantidad_entradas;
+    int cantidad_vehiculos;
+    char deseaParking;
+    char fecha[11]; // formato YYYY-MM-DD
+
+    printf("Ingrese ID del parque: ");
+    scanf("%d", &id_parque);
+
+    printf("Ingrese fecha (YYYY-MM-DD): ");
+    scanf("%10s", fecha);  // ✅ sin asterisco
+
+    printf("Ingrese cantidad de entradas: ");
+    scanf("%d", &cantidad_entradas);
+
+    if (!validarCapacidadParque(id_parque, fecha, cantidad_entradas)) {
+        printf("No hay capacidad disponible.\n");
+        return;
+    }
+
+    printf("¿Desea parking? (S/N): ");
+    scanf(" %c", &deseaParking);  // espacio para consumir enter anterior
+
+    if (deseaParking == 'S' || deseaParking == 's') {
+        printf("Ingrese cantidad de vehículos: ");
+        scanf("%d", &cantidad_vehiculos);
+
+        if (!validarCapacidadParking(id_parque, fecha, cantidad_vehiculos)) {
+            printf("No hay espacio de parking disponible.\n");
+            return;
+        }
+    } else {
+        cantidad_vehiculos = 0;
+    }
+
+    // Aquí continuarías con lógica de ingreso de visitante, pago, etc.
+    printf("Venta registrada (simulada).\n");
+}
+
+void validarEntradas() {
+    
+    char cedula[8];
+    printf("Ingrese cédula del visitante: ");
+    scanf("%s", cedula);
+
+    if(!esCedulaValida(cedula)) return;
+
+    printf("Cédula válida. Procediendo con la validación...\n");
+    
+    int mes;
+    printf("Ingrese mes (1-12): ");
+    imprimirMeses();
+    scanf("%d", &mes);
+    if (!esMesValido(mes)) return;
+
+    //En la funcion obtenerDiasDelMes, se ponen los dias que tienen los meses
+    int dias = obtenerDiasDelMes(mes, ANIO_2025);
+
+    //Agarrar el total de pases que tiene ese visitante
+    //Guardaros en una lista o array  
+    //PASE pases[TOTAL_PASES]
+    //Por cada pase, validarlo con pases_parques y preguntar por la fecha_acceso
+    
+
+}
+
+
 /*
 
 INICIAR VENTA

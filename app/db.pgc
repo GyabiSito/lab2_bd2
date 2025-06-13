@@ -3,18 +3,24 @@
 
 EXEC SQL INCLUDE sqlca;
 
-static DBSingleton* instancia = NULL;
+static DBSingleton *instancia = NULL;
 
-DBSingleton* getInstance(void) {
-    if (instancia == NULL) {
+DBSingleton *getInstance(void)
+{
+    if (instancia == NULL)
+    {
         instancia = malloc(sizeof(DBSingleton));
-        if (instancia != NULL) {
-            EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER usuario;
-            if (sqlca.sqlcode != 0) {
+        if (instancia != NULL)
+        {
+            EXEC SQL CONNECT TO lab02 @127.0.0.1 : 5432 USER usuario;
+            if (sqlca.sqlcode != 0)
+            {
                 printf("Error conectando a la BD: %d\n", sqlca.sqlcode);
                 free(instancia);
                 instancia = NULL;
-            } else {
+            }
+            else
+            {
                 instancia->conectado = 1;
             }
         }
@@ -22,10 +28,46 @@ DBSingleton* getInstance(void) {
     return instancia;
 }
 
-void cerrar_conexion(void) {
-    if (instancia != NULL) {
+void cerrar_conexion(void)
+{
+    if (instancia != NULL)
+    {
         EXEC SQL DISCONNECT;
         free(instancia);
         instancia = NULL;
     }
+}
+
+int validarCapacidadParque(int id_parque, char *fecha, int cantidad)
+{
+    printf("Validando capacidad para parque %d en fecha %s con cantidad %d...\n", id_parque, fecha, cantidad);
+    return 1;
+}
+
+int validarCapacidadParking(int id_parque, char *fecha, int cantidad_vehiculos)
+{
+    printf("Validando parking para parque %d en fecha %s con %d vehículos...\n", id_parque, fecha, cantidad_vehiculos);
+    return 1;
+}
+// TODO: BORRAR LOS PRINTF DE DEBUG
+bool existeCiVisitante(const char *num)
+{
+    printf("recibi la cedula : %s\n", num);
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    char cedula[8];
+    bool existe;
+    EXEC SQL END DECLARE SECTION;
+
+    strncpy(cedula, num, sizeof(cedula));
+    printf("Validando CI del visitante: %s...\n", cedula);
+
+    EXEC SQL SELECT EXISTS (SELECT 1 FROM visitantes WHERE ci = :cedula) INTO :existe;
+
+    printf("**************************\n");
+    printf("Estoy comparando la cédula: %s\n", cedula);
+    printf("Resultado de la consulta: %d\n", existe);
+    printf("**************************\n");
+
+    return existe;
 }
