@@ -58,7 +58,7 @@ gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
 > **Nota:** Cuando tengamos más archivos, será recomendable crear un `Makefile` para facilitar la compilación.
 
 
-
+Visitantes 100 pases 55448877
 /*
 
 INICIAR VENTA

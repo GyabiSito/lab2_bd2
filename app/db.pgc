@@ -12,17 +12,30 @@ DBSingleton *getInstance(void)
         instancia = malloc(sizeof(DBSingleton));
         if (instancia != NULL)
         {
-            EXEC SQL CONNECT TO lab02 @127.0.0.1 : 5432 USER usuario;
-            if (sqlca.sqlcode != 0)
+            EXEC SQL BEGIN DECLARE SECTION;
+            char conn_str[MAX_LENGTH]; //Esto es para guardar la cadena de conexión lab02@127.0.0.1:5432
+            char usuario[MAX_NOMBRE_LENGTH];
+            EXEC SQL END DECLARE SECTION;
+
+            //En los %s le pasamos los valores de las constantes definidas en constants.h y guardamos la cadena de conexión en conn_str
+            snprintf(conn_str, sizeof(conn_str), "%s@%s:%s", DB_NAME, DB_IP, DB_PORT);
+            strncpy(usuario, DB_USER, sizeof(usuario)); // Copiamos el nombre de usuario a la variable usuario
+            printf(CHAR_DB_CONECTANDO, conn_str);
+
+            EXEC SQL CONNECT TO :conn_str USER :usuario;
+
+            if (sqlca.sqlcode != SQL_SUCCESS)
             {
-                printf("Error conectando a la BD: %d\n", sqlca.sqlcode);
+                printf(CHAR_DB_ERROR, sqlca.sqlcode);
                 free(instancia);
                 instancia = NULL;
             }
             else
             {
-                instancia->conectado = 1;
+                instancia->conectado = DB_CONECTADO;
+
             }
+            printf(CHAR_DB_EXITOSO);
         }
     }
     return instancia;
@@ -34,7 +47,11 @@ void cerrar_conexion(void)
     {
         EXEC SQL DISCONNECT;
         free(instancia);
+        instancia->conectado = DB_DESCONECTADO;
         instancia = NULL;
+        
+        printf(CHAR_DB_DESCONECTANDO);
+
     }
 }
 
@@ -55,14 +72,14 @@ bool existeCiVisitante(const char *num)
     printf("recibi la cedula : %s\n", num);
 
     EXEC SQL BEGIN DECLARE SECTION;
-    char cedula[8];
+    char cedula[MAX_CI_LENGTH];
     bool existe;
     EXEC SQL END DECLARE SECTION;
 
     strncpy(cedula, num, sizeof(cedula));
     printf("Validando CI del visitante: %s...\n", cedula);
 
-    EXEC SQL SELECT EXISTS (SELECT 1 FROM visitantes WHERE ci = :cedula) INTO :existe;
+    EXEC SQL SELECT EXISTS(SELECT 1 FROM visitantes WHERE ci = :cedula) INTO :existe;
 
     printf("**************************\n");
     printf("Estoy comparando la cédula: %s\n", cedula);
@@ -70,4 +87,107 @@ bool existeCiVisitante(const char *num)
     printf("**************************\n");
 
     return existe;
+}
+
+VISITANTE getVisitante(const char *cedula)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_visitante;
+    char ci[MAX_CI_LENGTH];
+    char nombre[MAX_NOMBRE_LENGTH];
+    char cedula_local[MAX_CI_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+
+    VISITANTE visitante;
+
+    strncpy(cedula_local, cedula, sizeof(cedula_local));
+
+    printf("Buscando visitante con cédula: %s...\n", cedula_local);
+    EXEC SQL SELECT id_visitante, ci, nombre INTO :id_visitante, :ci, :nombre FROM visitantes WHERE ci = :cedula_local;
+
+    if (sqlca.sqlcode != SQL_SUCCESS)
+    {
+        printf("Error al obtener visitante: %d\n", sqlca.sqlcode);
+        visitante.id_visitante = ERROR_SIGNAL; // señal de error
+    }
+    else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
+    {
+        printf("No se encontró el visitante con cédula: %s\n", cedula_local);
+        visitante.id_visitante = ERROR_SIGNAL;
+    }
+    else
+    {
+        visitante.id_visitante = id_visitante;
+        strncpy(visitante.ci, ci, sizeof(visitante.ci));
+        strncpy(visitante.nombre, nombre, sizeof(visitante.nombre));
+        printf("Visitante encontrado: ID %d, CI %s, Nombre %s\n", visitante.id_visitante, visitante.ci, visitante.nombre);
+    }
+
+    return visitante;
+}
+
+
+// int getTotalPasesVisitante(int id_visitante, int mes, int dia)
+// {
+//     EXEC SQL BEGIN DECLARE SECTION;
+//     int total_pases = 0;
+//     int id_visitante_local = id_visitante;
+//     int mes_local = mes;
+//     int dia_local = dia;
+//     EXEC SQL END DECLARE SECTION;
+
+//     printf("Obteniendo total de pases para visitante con ID: %d en fecha %d/%d...\n", id_visitante, mes, dia);
+    
+//     EXEC SQL SELECT COUNT(*) INTO :total_pases FROM pases WHERE id_visitante = :id_visitante_local;
+//     if (sqlca.sqlcode != SQL_SUCCESS)
+//     {
+//         printf("Error al obtener total de pases: %d\n", sqlca.sqlcode);
+//         return ERROR_SIGNAL; // señal de error
+//     }
+
+//     printf("Total de pases encontrados: %d\n", total_pases);
+//     return total_pases;
+// }
+
+void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia) {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_visitante_local = id_visitante;
+    int id_pase;
+    int mes_local = mes;
+    int dia_local = dia;
+    char fecha_acceso[MAX_FECHA_LENGTH];// "YYYY-MM-DD"
+    char nombre_parque[MAX_NOMBRE_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL DECLARE cur_pase_fecha CURSOR FOR
+        SELECT pp.id_pase, pp.fecha_acceso, pa.nombre
+        FROM pases_parques pp
+        JOIN pases p ON pp.id_pase = p.id_pase
+        JOIN parques pa ON pp.id_parque = pa.id_parque
+        WHERE p.id_visitante = :id_visitante_local
+          AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
+          AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local
+        ORDER BY pp.fecha_acceso;
+
+    EXEC SQL OPEN cur_pase_fecha;
+
+    printf("buscando pases del visitante (ID: %d) para el día %d/%d...\n", id_visitante, dia, mes);
+    printf("\nPases del visitante (ID: %d) para el día %d/%d:\n", id_visitante, dia, mes);
+    printf("--------------------------------------------------\n");
+
+    int encontrados = 0;
+
+    while (1) {
+        EXEC SQL FETCH cur_pase_fecha INTO :id_pase, :fecha_acceso, :nombre_parque;
+        if (sqlca.sqlcode != SQL_SUCCESS) break;
+
+        printf("Pase ID: %d | Fecha: %s | Parque: %s\n",id_pase,fecha_acceso,nombre_parque);
+        encontrados++;
+    }
+
+    if (encontrados == 0) {
+        printf("No se encontraron pases para esa fecha.\n");
+    }
+
+    EXEC SQL CLOSE cur_pase_fecha;
 }

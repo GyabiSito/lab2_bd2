@@ -1,7 +1,7 @@
 #pragma once
 #ifndef STRUCTS_H
 #define STRUCTS_H
-
+#include "constants.h"
 typedef struct {
     int conectado;
 } DBSingleton;
@@ -9,7 +9,7 @@ typedef struct {
 typedef struct {
     int id_parque;
     int id_ubicacion;
-    char nombre[100];
+    char nombre[MAX_NOMBRE_LENGTH];
     int capacidad_maxima_diaria;
 } PARQUE;
 
@@ -17,8 +17,8 @@ typedef struct {
     int id_precio;
     int id_parque;
     float precio;
-    char fecha_inicio[11]; // YYYY-MM-DD
-    char fecha_fin[11];
+    char fecha_inicio[MAX_FECHA_LENGTH]; // YYYY-MM-DD
+    char fecha_fin[MAX_FECHA_LENGTH];
 } PRECIO;
 
 typedef struct {
@@ -30,39 +30,39 @@ typedef struct {
 
 typedef struct {
     int id_ubicacion;
-    char nombre[100];
+    char nombre[MAX_NOMBRE_LENGTH];
 } UBICACION;
 
 typedef struct {
     int id_atraccion;
     int id_parque;
-    char nombre[100];
-    char descripcion[255];
+    char nombre[MAX_NOMBRE_LENGTH];
+    char descripcion[MAX_LENGTH];
 } ATRACCIONES;
 
 typedef struct {
     int id_uso;
     int id_pase;
     int id_atraccion;
-    char fecha[11];
-    char hora[6];
-    char foto[255];
+    char fecha[MAX_FECHA_LENGTH];
+    char hora[MAX_HORA_LENGTH];
+    char foto[MAX_LENGTH];
 } USA;
 
 typedef struct {
     int id_accede;
     int id_pase_parque;
     int id_parque;
-    char fecha[11];
-    char hora[6];
-    char entrada_salida[10];
+    char fecha[MAX_FECHA_LENGTH];
+    char hora[MAX_HORA_LENGTH];
+    char entrada_salida[MAX_BOOL_LENGTH]; // 'E' para entrada, 'S' para salida
 } ACCEDE;
 
 typedef struct {
     int id_pase;
     int id_visitante;
     int id_compra;
-    char codigo_qr[255];
+    char codigo_qr[MAX_LENGTH];
     float precio_total;
 } PASE;
 
@@ -70,35 +70,35 @@ typedef struct {
     int id_pase_parque;
     int id_parque;
     int id_pase;
-    int incluye_parking; // 0 = no, 1 = sí
-    char fecha_accesso[11];
+    bool incluye_parking; // 0 = no, 1 = sí
+    char fecha_accesso[MAX_FECHA_LENGTH];
 } PaseParque;
 
 typedef struct {
     int id_visitante;
-    char ci[20];
-    char nombre[100];
+    char ci[MAX_CI_LENGTH];
+    char nombre[MAX_NOMBRE_LENGTH];
 } VISITANTE;
 
 typedef struct {
     int id_compra;
     int id_cliente;
-    char fecha_compra[11];
-    char hora_compra[6];
+    char fecha_compra[MAX_FECHA_LENGTH];
+    char hora_compra[MAX_HORA_LENGTH];
     float monto_total;
-    char debito_credito[10];
-    char numero_tarjeta[20];
-    char fecha_vencimiento[8];
-    char cvv[5];
+    char debito_credito[MAX_BOOL_LENGTH]; //D para débito, C para crédito
+    char numero_tarjeta[MAX_N_TARJETA_LENGTH];
+    char fecha_vencimiento[MAX_FECHA_VENCIMIENTO_LENGTH];
+    char cvv[MAX_CVV_LENGTH];
     int cant_pases;
     int cant_vehiculos;
 } COMPRA;
 
 typedef struct {
     int id_cliente;
-    char email[100];
-    char ci[20];
-    char nombre[100];
+    char email[MAX_LENGTH];
+    char ci[MAX_CI_LENGTH];
+    char nombre[MAX_NOMBRE_LENGTH];
 } CLIENTE;
 
 #endif

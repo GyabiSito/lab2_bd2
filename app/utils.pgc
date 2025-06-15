@@ -35,28 +35,53 @@ void imprimirMeses() {
 
 bool esCedulaValida(const char *cedula) {
     if (strlen(cedula) != 8){
-        printf("La cédula debe tener exactamente 8 dígitos.\n");
+        printf(ERROR_CEDULA_INVALIDA);
         return false;
     }
 
     for (int i = 0; i < 8; i++) {
         if (!isdigit((unsigned char)cedula[i])){
-            printf("La cédula solo debe contener dígitos.\n");
+            printf(ERROR_CEDULA_INVALIDA);
             return false;
         }
     }
 
     if(!existeCiVisitante(cedula)) {
-        printf("La cédula no existe en la base de datos.\n");
+        printf(ERROR_INEXISTENTE_CI);
         return false;
     }
     return true;
 }
 
 bool esMesValido(int mes) {
-    if(mes < 1 || mes > 12) {
-        printf("Mes inválido. Debe estar entre 1 y 12.\n");
+    if(mes < MIN_MES || mes > MAX_MES) {
+        printf(ERROR_MES_INVALIDO, MIN_MES, MAX_MES);
         return false;
     }
     return true;
+}
+
+bool esDiaValido(int dia, int mes, int anio) {
+    int diasDelMes = obtenerDiasDelMes(mes, anio);
+    if (dia < MIN_DIA || dia > diasDelMes) {
+        printf(ERROR_DIA_INVALIDO, diasDelMes, mes);
+        return false;
+    }
+    return true;
+}
+
+
+char* sanitizarInput(char *input) {
+    // Eliminar salto de línea si existe
+    input[strcspn(input, "\n")] = '\0';
+
+    // Verificar que todos los caracteres sean dígitos
+    for (size_t i = 0; i < strlen(input); i++) {
+        if (!isdigit((unsigned char)input[i])) {
+            printf(ERROR_LETRAS);
+            return NULL;
+        }
+    }
+
+    return input;
 }

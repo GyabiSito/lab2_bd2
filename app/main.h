@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "db.h"
 #include "utils.h"
-#define ANIO_2025 2025
+#include "constants.h"
 int main();
 void mostrarMenu();
 void realizarVenta();

@@ -10,4 +10,6 @@ int obtenerDiasDelMes(int mes, int anio);
 void imprimirMeses();
 bool esCedulaValida(const char *cedula);
 bool esMesValido(int mes);
+bool esDiaValido(int dia, int mes, int anio);
+char* sanitizarInput(char *input);
 #endif
