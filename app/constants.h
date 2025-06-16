@@ -71,7 +71,7 @@
 #define CHAR_INGRESE_CANTIDAD_VEHICULOS "Ingrese la cantidad de vehículos:\n"
 #define CHAR_CEDULA_VALIDA "Cédula válida. Procediendo con la validación...\n"
 #define CHAR_DESEA_PARKING "¿Desea parking? (S/N):\n"
-#define CHAR_NO_ESPACIOS_PARQUE "No hay espacio disponible para el parque %d en la fecha %s.\n"
+#define CHAR_NO_ESPACIOS_PARQUE "No hay espacio disponible para el parque %d en el mes %d, el dia %d.\n"
 #define CHAR_NO_ESPACIOS_PARKING "No hay espacio de parking disponible para el parque %d en la fecha %s.\n"
 #define CHAR_DESCONECTANDO "Cerrando cursores y desconectando...\n"
 #define CHAR_NO_MAS_PARQUES_DISPONIBLES "No hay más parques disponibles.\n"

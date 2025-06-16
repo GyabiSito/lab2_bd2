@@ -8,8 +8,8 @@
 
 DBSingleton *getInstance();
 void cerrar_conexion();
-int validarCapacidadParque(int id_parque, char *fecha, int cantidad);
-int validarCapacidadParking(int id_parque, char *fecha, int cantidad);
+int validarCapacidadParque(int id_parque, int mes, int dia, int cantidad);
+int validarCapacidadParking(int id_parque, int mes, int dia, int cantidad);
 bool existeCiVisitante(const char *cedula);
 
 // int getTotalPasesVisitante(int id_visitante, int mes, int dia);
@@ -17,6 +17,8 @@ bool existeCiVisitante(const char *cedula);
 
 void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia);
 long getMontoTotal(int anio, int mes);
+int getTotalReservasParque(int id_parque, int mes, int dia);
 VISITANTE getVisitante(const char *cedula);
+PARQUE getParque(int id_parque);
 
 #endif

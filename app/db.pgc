@@ -55,15 +55,21 @@ void cerrar_conexion(void)
     }
 }
 
-int validarCapacidadParque(int id_parque, char *fecha, int cantidad)
+int validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
 {
-    printf("Validando capacidad para parque %d en fecha %s con cantidad %d...\n", id_parque, fecha, cantidad);
+    //Select parque where id=:idparque
+    PARQUE parque=getParque(id_parque);
+    if(parque.id_parque==ERROR_SIGNAL) return 0;
+    //Agarrar el TOTAL de reservas|pases_parques para ESE parque
+    int totalReservas=getTotalReservasParque(id_parque,mes,dia);
+
+    printf("Validando capacidad para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad);
     return 1;
 }
 
-int validarCapacidadParking(int id_parque, char *fecha, int cantidad_vehiculos)
+int validarCapacidadParking(int id_parque, int mes, int dia, int cantidad_vehiculos)
 {
-    printf("Validando parking para parque %d en fecha %s con %d vehículos...\n", id_parque, fecha, cantidad_vehiculos);
+    printf("Validando parking para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad_vehiculos);
     return 1;
 }
 // TODO: BORRAR LOS PRINTF DE DEBUG
@@ -126,6 +132,43 @@ VISITANTE getVisitante(const char *cedula)
     return visitante;
 }
 
+PARQUE getParque(int id){
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_parque_local=id;
+    int id_parque;
+    int id_ubicacion;
+    char nombre[MAX_NOMBRE_LENGTH];
+    int capacidad_maxima_diaria;
+    EXEC SQL END DECLARE SECTION;
+
+    PARQUE parque;
+
+    printf("Buscando el parque con ID %d\n", id);
+    EXEC SQL SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria 
+    INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria 
+    FROM parques p
+    WHERE p.id_parque=:id_parque_local;
+
+    if (sqlca.sqlcode != SQL_SUCCESS)
+    {
+        printf("Error al obtener el parque: %d\n", sqlca.sqlcode);
+        parque.id_parque = ERROR_SIGNAL; // señal de error
+    }
+    else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
+    {
+        printf("No se encontró el parque con id: %s\n", id_parque);
+        parque.id_parque = ERROR_SIGNAL;
+    }
+    else
+    {
+        parque.id_parque = id_parque;
+        parque.id_ubicacion=id_ubicacion;
+        parque.capacidad_maxima_diaria=capacidad_maxima_diaria;
+        strncpy(parque.nombre, nombre, sizeof(parque.nombre));
+        printf("Parque encontrado: ID %d\n, ID Ubicacion %d\n, Nombre %s\n, capacidad maxima diaria %d\n", parque.id_parque, parque.id_ubicacion, parque.nombre,parque.capacidad_maxima_diaria);
+    }
+    return parque;
+}
 
 // int getTotalPasesVisitante(int id_visitante, int mes, int dia)
 // {
@@ -209,3 +252,22 @@ long getMontoTotal(int anio, int mes){
     return total;
  
 }
+
+int getTotalReservasParque(int id_parque, int mes, int dia){
+    //Agarrar el TOTAL de reservas|pases_parques para ESE parque
+    EXEC SQL BEGIN DECLARE SECTION;
+    int total_pases;
+    int id_parque_local=id_parque;
+    int mes_local=mes;
+    int dia_local=dia;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT COUNT(*) INTO :total_pases FROM pases_parques pp
+        WHERE pp.id_parque=:id_parque_local
+        AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
+        AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
+    
+    printf("TOTAL PASES %d",total_pases);
+    return total_pases;
+}
+
