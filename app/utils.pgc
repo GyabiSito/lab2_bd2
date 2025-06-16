@@ -62,6 +62,7 @@ bool esMesValido(int mes) {
 }
 
 bool esDiaValido(int dia, int mes, int anio) {
+    if(!esAnioValido(anio)) return false;
     int diasDelMes = obtenerDiasDelMes(mes, anio);
     if (dia < MIN_DIA || dia > diasDelMes) {
         printf(ERROR_DIA_INVALIDO, diasDelMes, mes);
@@ -70,7 +71,13 @@ bool esDiaValido(int dia, int mes, int anio) {
     return true;
 }
 
-
+bool esAnioValido(int anio){
+    if(anio < MIN_ANIO || anio > MAX_ANIO){
+        printf(ERROR_ANIO_INVALIDO ,anio);
+        return false;
+    }
+    return true;
+}
 char* sanitizarInput(char *input) {
     // Eliminar salto de línea si existe
     input[strcspn(input, "\n")] = '\0';

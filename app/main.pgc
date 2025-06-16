@@ -16,7 +16,7 @@ EXEC SQL END DECLARE SECTION;
 
 int main()
 {
-    // Llama al singleton para obtener la conexión activa
+
     DBSingleton* db = getInstance();
     if (!db || !db->conectado) {
         printf(ERROR_NO_CONEXION_DB);
@@ -72,14 +72,12 @@ int main()
         switch (opcion) {
             case 1: 
                 realizarVenta();
-                // Aquí iría la lógica para la venta de entradas
                 break;
             case 2:
                 validarEntradas();
                 break;
             case 3:
-                printf("Total Recaudado Mes o Año para el parque %s (ID: %d)\n", nombre, id_parque);
-                // Aquí iría la lógica para calcular el total recaudado
+                totalRecaudadoFecha();
                 break;
             case 0:
                 printf("Saliendo del programa...\n");
@@ -111,17 +109,28 @@ void realizarVenta() {
     int cantidad_entradas;
     int cantidad_vehiculos;
     char deseaParking;
-    char fecha[MAX_FECHA_LENGTH]; // formato YYYY-MM-DD
 
     printf(CHAR_INGRESE_ID_PARQUE);
     scanf("%d", &id_parque);
 
-    printf(CHAR_INGRESE_FECHA);
-    scanf("%10s", fecha);  // ✅ sin asterisco
+
+    int mes;
+    printf(CHAR_INGRESE_MES);
+    imprimirMeses();
+    scanf("%d", &mes);
+    if (!esMesValido(mes)) return;
+    
+    //En la funcion obtenerDiasDelMes, se ponen los dias que tienen los meses
+    int totalDiasMes = obtenerDiasDelMes(mes, ANIO_2025);
+    printf(CHAR_INGRESE_DIA, totalDiasMes);
+    int dia;
+    scanf("%d", &dia);
+    if(!esDiaValido(dia, mes, ANIO_2025)) return;
 
     printf(CHAR_INGRESE_CANTIDAD_ENTRADAS);
     scanf("%d", &cantidad_entradas);
 
+    //Arreglar esto, que ya no agarra fecha sino que agarra mes y dia
     if (!validarCapacidadParque(id_parque, fecha, cantidad_entradas)) {
         printf(CHAR_NO_ESPACIOS_PARQUE, id_parque, fecha);
         return;
@@ -142,7 +151,6 @@ void realizarVenta() {
         cantidad_vehiculos = 0;
     }
 
-    // Aquí continuarías con lógica de ingreso de visitante, pago, etc.
     printf("Venta registrada (simulada).\n");
 }
 
@@ -153,7 +161,7 @@ void validarEntradas() {
 
     if(!esCedulaValida(cedula)) return;
 
-    printf(CHAR_CEDULA_VALIDA, cedula);
+    printf(CHAR_CEDULA_VALIDA);
     
     int mes;
     printf(CHAR_INGRESE_MES);
@@ -179,7 +187,28 @@ void validarEntradas() {
     return;
 }
 
+void totalRecaudadoFecha(){
+    //Preguntar el año
+    int anio;
+    printf(CHAR_INGRESE_ANIO);
+    scanf("%d",&anio);
+    if(!esAnioValido(anio)) return;
 
+    //Preguntar el mes
+    int mes;
+    printf(CHAR_INGRESE_MES);
+    imprimirMeses();
+    scanf("%d", &mes);
+    if (!esMesValido(mes)) return;
+
+    //Agarrar el monto total de compras segun ese año y mes
+    long monto_total=getMontoTotal(anio,mes);
+
+    printf(CHAR_IMPRIMIR_ASTERISCO);
+    printf(CHAR_MONTO_TOTAL,monto_total);
+    printf(CHAR_IMPRIMIR_ASTERISCO);
+    return;
+}
 /*
 
 INICIAR VENTA

@@ -10,5 +10,5 @@ int main();
 void mostrarMenu();
 void realizarVenta();
 void validarEntradas();
-
+void totalRecaudadoFecha();
 #endif // MAIN_H

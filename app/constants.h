@@ -7,6 +7,7 @@
 #define DB_IP "127.0.0.1"
 #define DB_PORT "5432"
 #define DB_USER "usuario"
+#define DB_PASSWORD NULL  // Aquí tu contraseña sin "WITH PASSWORD" ni apóstrofes problemáticos
 #define DB_CONECTADO 1
 #define DB_DESCONECTADO 0
 //********** FIN BASE DE DATOS *****************/
@@ -18,6 +19,8 @@
 
 //********** MIS CONSTANTES *****************/
 #define ANIO_2025 2025
+#define MIN_ANIO 1900
+#define MAX_ANIO 9999
 #define MIN_MES 1
 #define MAX_MES 12
 #define MIN_DIA 1
@@ -53,14 +56,15 @@
 
 //********** CHARS *****************/
 #define CHAR_DB_CONECTANDO "Conectando a la base de datos con la cadena: %s\n"
-#define CHAR_DB_ERROR "Error conectando a la base de datos: %d\n"
+#define CHAR_DB_ERROR "Error conectando a la base de datos: %ld\n"
 #define CHAR_DB_EXITOSO "Conexión exitosa a la base de datos.\n"
 #define CHAR_DB_DESCONECTANDO "Desconectando de la base de datos...\n"
 #define CHAR_OPCION_INVALIDA "Opción inválida. Por favor, ingrese un número válido.\n"
 #define CHAR_INGRESE_DIA "Ingrese un dia entre 1 y %d: \n"
 #define CHAR_INGRESE_MES "Ingrese el mes (1-12):\n"
+#define CHAR_INGRESE_ANIO "Ingrese año \n"
 #define CHAR_INGRESE_CEDULA "Ingrese la cédula del visitante (8 dígitos):\n"
-#define CHAR_INGRESE_ID_PARQUE "Ingrese el ID del parque:\n"
+#define CHAR_INGRESE_ID_PARQUE "Ingrese el ID del parque (1-4):\n"
 #define CHAR_INGRESE_FECHA "Ingrese la fecha (YYYY-MM-DD):\n"
 #define CHAR_VISITANTE_ENCONTRADO "Visitante encontrado: %s (ID: %d)\n"
 #define CHAR_INGRESE_CANTIDAD_ENTRADAS "Ingrese la cantidad de entradas:\n"
@@ -71,6 +75,8 @@
 #define CHAR_NO_ESPACIOS_PARKING "No hay espacio de parking disponible para el parque %d en la fecha %s.\n"
 #define CHAR_DESCONECTANDO "Cerrando cursores y desconectando...\n"
 #define CHAR_NO_MAS_PARQUES_DISPONIBLES "No hay más parques disponibles.\n"
+#define CHAR_MONTO_TOTAL "El total es %ld\n"
+#define CHAR_IMPRIMIR_ASTERISCO "***************\n"
 //********** FIN CHARS *****************/
 
 //********** ERRORES DE ENTRADA *****************/
@@ -79,8 +85,9 @@
 #define ERROR_DIA_INVALIDO "Error: El día debe estar entre 1 y %d para el mes %d.\n"
 #define ERROR_LETRAS "Error: El input contiene letras. Solo se permiten caracteres numéricos.\n"
 #define ERROR_INEXISTENTE_CI "Error: La cédula ingresada no existe en la base de datos.\n"
-#define ERROR_OBTENER_DATOS "Error al obtener datos: %d\n"
+#define ERROR_OBTENER_DATOS "Error al obtener datos: %ld\n"
 #define ERROR_NO_CONEXION_DB "Error: No se pudo establecer conexión con la base de datos.\n"
+#define ERROR_ANIO_INVALIDO "Error: El año %ld es invalido\n"
 //********** FIN ERRORES DE ENTRADA *****************/
 
 #endif

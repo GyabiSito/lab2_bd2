@@ -16,6 +16,7 @@ bool existeCiVisitante(const char *cedula);
 // void imprimirPasesVisitante(int id_visitante);
 
 void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia);
+long getMontoTotal(int anio, int mes);
 VISITANTE getVisitante(const char *cedula);
 
 #endif

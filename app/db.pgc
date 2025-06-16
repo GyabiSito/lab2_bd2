@@ -22,6 +22,7 @@ DBSingleton *getInstance(void)
             strncpy(usuario, DB_USER, sizeof(usuario)); // Copiamos el nombre de usuario a la variable usuario
             printf(CHAR_DB_CONECTANDO, conn_str);
 
+
             EXEC SQL CONNECT TO :conn_str USER :usuario;
 
             if (sqlca.sqlcode != SQL_SUCCESS)
@@ -33,9 +34,8 @@ DBSingleton *getInstance(void)
             else
             {
                 instancia->conectado = DB_CONECTADO;
-
+                printf(CHAR_DB_EXITOSO);
             }
-            printf(CHAR_DB_EXITOSO);
         }
     }
     return instancia;
@@ -190,4 +190,22 @@ void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia) {
     }
 
     EXEC SQL CLOSE cur_pase_fecha;
+}
+
+long getMontoTotal(int anio, int mes){
+    EXEC SQL BEGIN DECLARE SECTION;
+    long total=0;
+    int anio_local=anio;
+    int mes_local=mes;
+    char fecha_compra[MAX_FECHA_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+    
+    EXEC SQL SELECT SUM(monto_total) INTO :total FROM compras c 
+        WHERE EXTRACT(YEAR FROM c.fecha_compra) = :anio_local
+        AND EXTRACT(MONTH FROM c.fecha_compra) = :mes_local;
+
+    printf("Buscando total en el año %d, y el mes %d \n", anio_local, mes_local);
+
+    return total;
+ 
 }
