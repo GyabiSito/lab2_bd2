@@ -55,7 +55,7 @@ void cerrar_conexion(void)
     }
 }
 
-int validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
+bool validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
 {
     //Select parque where id=:idparque
     PARQUE parque=getParque(id_parque);
@@ -63,14 +63,17 @@ int validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
     //Agarrar el TOTAL de reservas|pases_parques para ESE parque
     int totalReservas=getTotalReservasParque(id_parque,mes,dia);
 
+    if(totalReservas + cantidad > parque.capacidad_maxima_diaria){
+        return false;
+    }
     printf("Validando capacidad para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad);
-    return 1;
+    return true;
 }
 
-int validarCapacidadParking(int id_parque, int mes, int dia, int cantidad_vehiculos)
+bool validarCapacidadParking(int id_parque, int mes, int dia, int cantidad_vehiculos)
 {
     printf("Validando parking para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad_vehiculos);
-    return 1;
+    return true;
 }
 // TODO: BORRAR LOS PRINTF DE DEBUG
 bool existeCiVisitante(const char *num)
@@ -267,7 +270,7 @@ int getTotalReservasParque(int id_parque, int mes, int dia){
         AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
         AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
     
-    printf("TOTAL PASES %d",total_pases);
+    printf("TOTAL PASES %d\n",total_pases);
     return total_pases;
 }
 
