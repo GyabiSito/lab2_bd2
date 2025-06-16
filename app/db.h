@@ -20,5 +20,6 @@ long getMontoTotal(int anio, int mes);
 int getTotalReservasParque(int id_parque, int mes, int dia);
 VISITANTE getVisitante(const char *cedula);
 PARQUE getParque(int id_parque);
+PARKING getParking(int id_parque);
 
 #endif

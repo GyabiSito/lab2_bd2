@@ -72,7 +72,8 @@ bool validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
 
 bool validarCapacidadParking(int id_parque, int mes, int dia, int cantidad_vehiculos)
 {
-    printf("Validando parking para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad_vehiculos);
+    PARKING parking=getParking(id_parque);
+    int totalReservasParking=getTotalReservasParking(parking.id_parking,mes,dia);
     return true;
 }
 // TODO: BORRAR LOS PRINTF DE DEBUG
@@ -173,6 +174,42 @@ PARQUE getParque(int id){
     return parque;
 }
 
+PARKING getParking(int id_parque){
+    EXEC SQL BEGIN DECLARE SECTION;
+        int id_parking;
+        int id_parque_local=id_parque;
+        int limite_vehiculos;
+        float costo_adicional;
+    EXEC SQL END DECLARE SECTION;
+    PARKING parking;
+    
+    printf("Buscando el parking del parque %d\n",id_parque);
+
+    EXEC SQL SELECT id_parking, limite_vehiculos, costo_adicional 
+    INTO :id_parking, :limite_vehiculos, :costo_adicional
+    FROM parkings p
+    WHERE p.id_parque=:id_parque_local;
+
+    if (sqlca.sqlcode != SQL_SUCCESS)
+    {
+        printf("Error al obtener el parking: %d\n", sqlca.sqlcode);
+        parking.id_parking = ERROR_SIGNAL; // señal de error
+    }
+    else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
+    {
+        printf("No se encontró el parking del parque: %s\n", id_parque);
+        parking.id_parking = ERROR_SIGNAL;
+    }
+    else
+    {
+        parking.id_parking = id_parking;
+        parking.id_parque=id_parque;
+        parking.limite_vehiculos=limite_vehiculos;
+        parking.costo_adicional=costo_adicional;
+        printf("Parking encontrado: ID %d\n, ID Parque %d\n, Limite vehiculos %d\n, Costo Adicional %d\n", parking.id_parking, parking.id_parque, parking.limite_vehiculos,parking.costo_adicional);
+    }
+    return parking;
+}
 // int getTotalPasesVisitante(int id_visitante, int mes, int dia)
 // {
 //     EXEC SQL BEGIN DECLARE SECTION;
