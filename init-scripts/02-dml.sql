@@ -22482,11 +22482,12 @@ INSERT INTO acceden (id_pase_parque, id_parque, fecha_accede, hora_accede, entra
 INSERT INTO acceden (id_pase_parque, id_parque, fecha_accede, hora_accede, entrada_salida) VALUES (4852, 2, '2024-03-31', '2024-03-31 06:15:00', 'E');
 INSERT INTO usan (id_pase, id_atraccion, fecha_usa, hora_usa, foto) VALUES (2458, 10, '2024-03-31', '2024-03-31 07:10:00', 'foto_6830e1d513c47');
 INSERT INTO acceden (id_pase_parque, id_parque, fecha_accede, hora_accede, entrada_salida) VALUES (4852, 2, '2024-03-31', '2024-03-31 06:15:00', 'S');
-INSERT INTO cotizaciones (moneda, precio,'2025-06-08') VALUES ('EUR', 47.47);
-INSERT INTO cotizaciones (moneda, precio,'2025-06-08') VALUES ('USD', 41.56);
+INSERT INTO cotizaciones (moneda, precio, fecha) VALUES ('EUR', 47.47, '2025-06-08');
+INSERT INTO cotizaciones (moneda, precio, fecha) VALUES ('USD', 41.56, '2025-06-08');
 
 INSERT INTO compras (id_compra, id_cliente, cant_vehiculos, fecha_compra, hora_compra, monto_total, cant_pases, debito_credito, numero_tarjeta, fecha_vencimiento, cvv) VALUES (37, 1, 0, '2025-06-15', '2025-06-15 07:50:37', 43200, 1, 'D', '1234567890123456', '2030-12-01', '123');
-INSERT INTO visitantes (id_visitante, nombre, ci) VALUES (456, 'Visitante 100 Veces Esta vez si', '55448877');
+INSERT INTO visitantes (id_visitante, nombre, ci) VALUES (456, 'Vis100veces', '55448877');
+
 INSERT INTO pases (id_pase, id_visitante, id_compra, precio_total, codigo_qr) VALUES (2560, 456, 37, 43200, 'qr_684e7b4e06801');
 INSERT INTO pases_parques (id_pase_parque, id_pase, id_parque, id_precio, incluye_parking, fecha_acceso) VALUES (4954, 2560, 1, 1, false, '2025-07-15');
 INSERT INTO pases_parques (id_pase_parque, id_pase, id_parque, id_precio, incluye_parking, fecha_acceso) VALUES (4955, 2560, 1, 1, false, '2025-07-16');
