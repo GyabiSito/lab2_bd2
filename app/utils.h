@@ -14,4 +14,6 @@ bool esDiaValido(int dia, int mes, int anio);
 bool esAnioValido(int anio);
 char* esNumeroValido(char *input);
 bool esNombreValido(const char *nombre);
+char* esNumeroValidoTarjeta(char *input);
+void clearConsole();
 #endif

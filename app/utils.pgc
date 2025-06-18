@@ -34,33 +34,27 @@ void imprimirMeses() {
 
 
 bool esCedulaValida(const char *cedula) {
-    if (strlen(cedula) != 8){
-        printf(ERROR_CEDULA_INVALIDA);
+    if (strlen(cedula) != 8) {
         return false;
     }
 
     for (int i = 0; i < 8; i++) {
-        if (!isdigit((unsigned char)cedula[i])){
-            printf(ERROR_CEDULA_INVALIDA);
+        if (!isdigit((unsigned char)cedula[i])) {
             return false;
         }
     }
+
     return true;
 }
 
 bool esMesValido(int mes) {
-    if(mes < MIN_MES || mes > MAX_MES) {
-        printf(ERROR_MES_INVALIDO, MIN_MES, MAX_MES);
-        return false;
-    }
-    return true;
+    return (mes >= MIN_MES && mes <= MAX_MES);
 }
 
 bool esDiaValido(int dia, int mes, int anio) {
     if(!esAnioValido(anio)) return false;
     int diasDelMes = obtenerDiasDelMes(mes, anio);
     if (dia < MIN_DIA || dia > diasDelMes) {
-        printf(ERROR_DIA_INVALIDO, diasDelMes, mes);
         return false;
     }
     return true;
@@ -77,14 +71,33 @@ char* esNumeroValido(char *input) {
     // Eliminar salto de línea si existe
     input[strcspn(input, "\n")] = '\0';
 
+    // Verificar que no esté vacío
+    if (strlen(input) == 0) {
+        printf("ERROR: Entrada vacía.\n");
+        return NULL;
+    }
+
     // Verificar que todos los caracteres sean dígitos
     for (size_t i = 0; i < strlen(input); i++) {
         if (!isdigit((unsigned char)input[i])) {
-            printf(ERROR_LETRAS);
+            printf("ERROR: Solo se permiten dígitos.\n");
             return NULL;
         }
     }
 
+    return input;
+}
+
+char* esNumeroValidoTarjeta(char *input) {
+    // No hace falta cortar \n si usás scanf("%s")
+    size_t len = strlen(input);
+
+    for (size_t i = 0; i < len; i++) {
+        if (!isdigit((unsigned char)input[i])) {
+            printf("ERROR: Solo se permiten dígitos.\n");
+            return NULL;
+        }
+    }
     return input;
 }
 
@@ -100,4 +113,12 @@ bool esNombreValido(const char *nombre) {
         }
     }
     return true;
+}
+
+void clearConsole(){
+#ifdef _WIN32
+system("cls");
+#else
+system("clear");
+#endif 
 }

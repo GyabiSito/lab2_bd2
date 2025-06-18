@@ -52,14 +52,18 @@
 #define MAX_LENGTH 255
 #define MAX_BOOL_LENGTH 1
 #define MAX_CI_LENGTH 8
-#define MAX_N_TARJETA_LENGTH 20
+#define MAX_N_TARJETA_LENGTH 16
+#define MAX_N_TARJETA_LENGTH_BUFFER 17
 #define MAX_FECHA_VENCIMIENTO_LENGTH 5
-#define MAX_CVV_LENGTH 5
+#define MAX_CVV_LENGTH 3
+#define MAX_CVV_LENGTH_BUFFER 4
 #define CEDULA_INVALIDA_INTENTE_NUEVAMENTE "Cédula inválida. Intente nuevamente:\n"
 #define VISITANTE_NO_ENCONTRADO "Visitante no encontrado. Ingrese nombre: \n"
-#define CHAR_DEBITO 'd'
-#define CHAR_CREDITO 'c'
+#define CHAR_DEBITO 1
+#define CHAR_CREDITO 0
 #define SEPARADOR_TARJETA '/'
+#define SI_DESEA_PARKING 1
+#define NO_DESEA_PARKING 0
 //********** FIN LONGITUDES MAXIMAS *****************/
 
 //*********** MENU ********************/
@@ -75,7 +79,6 @@
 #define CHAR_DB_ERROR "Error conectando a la base de datos: %ld\n"
 #define CHAR_DB_EXITOSO "Conexión exitosa a la base de datos.\n"
 #define CHAR_DB_DESCONECTANDO "Desconectando de la base de datos...\n"
-#define CHAR_OPCION_INVALIDA "Opción inválida. Por favor, ingrese un número válido.\n"
 #define CHAR_INGRESE_DIA "Ingrese un dia entre 1 y %d: \n"
 #define CHAR_INGRESE_MES "Ingrese el mes (1-12):\n"
 #define CHAR_INGRESE_ANIO "Ingrese año \n"
@@ -86,12 +89,11 @@
 #define CHAR_INGRESE_CANTIDAD_ENTRADAS "Ingrese la cantidad de entradas:\n"
 #define CHAR_INGRESE_CANTIDAD_VEHICULOS "Ingrese la cantidad de vehículos:\n"
 #define CHAR_CEDULA_VALIDA "Cédula válida. Procediendo con la validación...\n"
-#define CHAR_DESEA_PARKING "¿Desea parking? (S/N):\n"
+#define CHAR_DESEA_PARKING "¿Desea parking? (1: Si/0. No):\n"
 #define CHAR_NO_ESPACIOS_PARQUE "No hay espacio disponible para el parque %d en el mes %d, el dia %d.\n"
 #define CHAR_NO_ESPACIOS_PARKING "No hay espacio de parking disponible para el parque %d en la fecha %s.\n"
 #define CHAR_DESCONECTANDO "Cerrando cursores y desconectando...\n"
 #define CHAR_NO_MAS_PARQUES_DISPONIBLES "No hay más parques disponibles.\n"
-#define CHAR_MONTO_TOTAL "El total es %ld\n"
 #define CHAR_IMPRIMIR_ASTERISCO "***********************************\n"
 #define CHAR_NO_PARQUES_DISPONIBLES "No hay parques disponibles.\n"
 #define CHAR_CAPACIDAD_PARKING_EXCEDIDA "Capacidad del parking %d excedida: %d reservas actuales, límite %d\n"
@@ -100,6 +102,24 @@
 #define CHAR_VISITANTE_EXISTE "El visitante con cédula %s y con nombre %s ya existe en la base de datos.\n"
 #define CHAR_ENTRADA_INVALIDA "Entrada inválida. Por favor, ingrese %s para sí o %s para no: \n"
 #define CHAR_COSTO_ADICIONAL_PARKING "El costo adicional por vehiculo en el parking es: %d\n"
+#define CHAR_RESUMEN_VENTA "Resumen de la venta:\n"
+#define CHAR_MOSTRAR_PARQUE "Parque: %s (ID: %d)\n"
+#define CHAR_MOSTRAR_FECHA "Fecha: %d/%d/2025\n"
+#define CHAR_MOSTRAR_CANT_ENTRADAS "Cantidad de entradas: %d\n"
+#define CHAR_CANTIDAD_VEHICULOS "Cantidad de vehículos: %d\n"
+#define CHAR_NO_RESERVADO_PARKING "No se ha reservado parking.\n"
+#define CHAR_VISITANTES "Visitantes:\n"
+#define CHAR_IMPRIMIR_VISITANTE " - Nombre: %s, Cédula: %s (ID: %d)\n"
+#define CHAR_DESEA_CONFIRMAR_VENTA "¿Desea confirmar la venta? (1: Sí, 0: No): "
+#define CHAR_OPCION_INVALIDA "Opción inválida. Intente nuevamente.\n"
+#define CHAR_VENTA_CANCELADA "Venta cancelada.\n"
+#define CHAR_INGRESE_DATOS_TARJETA "Ingrese los datos de la tarjeta:\n"
+#define CHAR_INGRESE_NUMERO_TARJETA "Número de tarjeta (16 dígitos): \n"
+#define CHAR_INGRESE_F_VENC_TARJETA "Fecha de vencimiento (MM/AA): "
+#define CHAR_INGRESE_CVV "CVV (3 dígitos): "
+#define CHAR_INGRESE_TIPO_TARJETA "Tipo de tarjeta (1: Débito, 0: Crédito): "
+#define CHAR_ID_PARQUE_INVALIDO "ID de parque inválido. Intente de nuevo.\n"
+#define CHAR_INGRESE_NOMBRE_VISITANTE "Ingrese el nombre del visitante: \n"
 
 //********** FIN CHARS *****************/
 
@@ -122,6 +142,13 @@
 #define ERROR_OBTENER_MAX_ID "Error: No se pudo obtener el ID máximo.\n"
 #define ERROR_CONTAR_RESERVAS_PARKING "Error al contar reservas de parking para el parque %d en el mes %d, dia %d: %ld\n"
 #define ERROR_VISITANTE_INGRESADO "El visitante con cédula %s ya fue ingresado. Intente nuevamente.\n"
+#define ERROR_TARJETA_INVALIDA "Número de tarjeta inválido. Debe tener 16 dígitos.\n"
+#define ERROR_F_VENC_INVALIDA "Fecha de vencimiento inválida. Debe tener el formato MM/AA.\n"
+#define ERROR_CVV_INVALIDO "CVV inválido. Debe tener 3 dígitos.\n"
+#define ERROR_TIPO_TARJETA_INVALIDO "Tipo de tarjeta inválido. Debe ser 'D' para Débito o 'C' para Crédito.\n"
+#define ERROR_CANTIDAD_INVALIDA "Cantidad inválida. Debe ser un número mayor a 0.\n"
+#define ERROR_DESEA_PARKING "Entrada inválida. Ingrese 1 para Sí o 0 para No.\n"
+#define ERROR_CANT_VEHICULOS "Entrada inválida. Ingrese un número entre 0 y %d.\n"
 //********** FIN ERRORES DE ENTRADA *****************/
 
 #endif
