@@ -25,7 +25,7 @@ typedef struct {
     int id_parking;
     int id_parque;
     int limite_vehiculos;
-    float costo_adicional;
+    int costo_adicional;
 } PARKING;
 
 typedef struct {

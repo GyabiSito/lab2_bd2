@@ -7,7 +7,7 @@
 #define DB_IP "127.0.0.1"
 #define DB_PORT "5432"
 #define DB_USER "usuario"
-#define DB_PASSWORD NULL  // Aquí tu contraseña sin "WITH PASSWORD" ni apóstrofes problemáticos
+// #define DB_PASSWORD NULL 
 #define DB_CONECTADO 1
 #define DB_DESCONECTADO 0
 //********** FIN BASE DE DATOS *****************/
@@ -24,6 +24,17 @@
 #define MIN_MES 1
 #define MAX_MES 12
 #define MIN_DIA 1
+#define MAX_PARQUES 4
+#define IMPRIMIR_PARQUE "Parque ID: %d, Nombre: %s, Capacidad: %d\n"
+#define TOTAL_ENTRADAS_RESERVADAS "Total de entradas reservadas para el parque %d en el mes %d, dia %d: %d\n"
+#define CAPACIDAD_MAXIMA_PARQUE "Capacidad máxima del parque %d: %d\n"
+#define TOTAL_PARKING_RESERVADOS "Total de parking reservados para el parque %d en el mes %d, dia %d: %d\n"
+#define CAPACIDAD_MAXIMA_PARKING "Capacidad máxima del parking %d: %d\n"
+#define MAX_PARQUES 4
+#define CANTIDAD_DISPONIBLE "Cantidad disponible: %d\n"
+#define CHAR_SI_DESEA_PARKING 's'
+#define CHAR_NO_DESEA_PARKING 'n'
+
 //********** FIN MIS CONSTANTES *****************/
 
 //********** ERRORES *****************/
@@ -42,8 +53,13 @@
 #define MAX_BOOL_LENGTH 1
 #define MAX_CI_LENGTH 8
 #define MAX_N_TARJETA_LENGTH 20
-#define MAX_FECHA_VENCIMIENTO_LENGTH 8
+#define MAX_FECHA_VENCIMIENTO_LENGTH 5
 #define MAX_CVV_LENGTH 5
+#define CEDULA_INVALIDA_INTENTE_NUEVAMENTE "Cédula inválida. Intente nuevamente:\n"
+#define VISITANTE_NO_ENCONTRADO "Visitante no encontrado. Ingrese nombre: \n"
+#define CHAR_DEBITO 'd'
+#define CHAR_CREDITO 'c'
+#define SEPARADOR_TARJETA '/'
 //********** FIN LONGITUDES MAXIMAS *****************/
 
 //*********** MENU ********************/
@@ -76,7 +92,15 @@
 #define CHAR_DESCONECTANDO "Cerrando cursores y desconectando...\n"
 #define CHAR_NO_MAS_PARQUES_DISPONIBLES "No hay más parques disponibles.\n"
 #define CHAR_MONTO_TOTAL "El total es %ld\n"
-#define CHAR_IMPRIMIR_ASTERISCO "***************\n"
+#define CHAR_IMPRIMIR_ASTERISCO "***********************************\n"
+#define CHAR_NO_PARQUES_DISPONIBLES "No hay parques disponibles.\n"
+#define CHAR_CAPACIDAD_PARKING_EXCEDIDA "Capacidad del parking %d excedida: %d reservas actuales, límite %d\n"
+#define CHAR_PARQUES_DISPONIBLES "Parques disponibles:\n"
+#define CHAR_MONTO_TOTAL "Monto total: %ld\n"
+#define CHAR_VISITANTE_EXISTE "El visitante con cédula %s y con nombre %s ya existe en la base de datos.\n"
+#define CHAR_ENTRADA_INVALIDA "Entrada inválida. Por favor, ingrese %s para sí o %s para no: \n"
+#define CHAR_COSTO_ADICIONAL_PARKING "El costo adicional por vehiculo en el parking es: %d\n"
+
 //********** FIN CHARS *****************/
 
 //********** ERRORES DE ENTRADA *****************/
@@ -88,6 +112,16 @@
 #define ERROR_OBTENER_DATOS "Error al obtener datos: %ld\n"
 #define ERROR_NO_CONEXION_DB "Error: No se pudo establecer conexión con la base de datos.\n"
 #define ERROR_ANIO_INVALIDO "Error: El año %ld es invalido\n"
+#define ERROR_MAXIMOS_PARQUES "Error: El número máximo de parques es %d.\n"
+#define ERROR_ASIGNAR_MEMORIA "Error: No se pudo asignar memoria.\n"
+#define ERROR_RESERVAS_PARQUE "Error al obtener reservas del parque: %ld\n"
+#define ERROR_NO_SE_ENCONTRO_PARKING "Error: No se encontró el parking para el parque con ID %d.\n"
+#define ERROR_VISITANTE_NO_ENCONTRADO "Error: No se encontró el visitante con cédula: %s\n"
+#define ERROR_PARQUE_NO_ENCONTRADO "Error: No se encontró el parque con ID: %d\n"
+#define ERROR_NOMBRE_INVALIDO "Error: El nombre ingresado es inválido. Debe contener solo letras y espacios.\n"
+#define ERROR_OBTENER_MAX_ID "Error: No se pudo obtener el ID máximo.\n"
+#define ERROR_CONTAR_RESERVAS_PARKING "Error al contar reservas de parking para el parque %d en el mes %d, dia %d: %ld\n"
+#define ERROR_VISITANTE_INGRESADO "El visitante con cédula %s ya fue ingresado. Intente nuevamente.\n"
 //********** FIN ERRORES DE ENTRADA *****************/
 
 #endif

@@ -45,11 +45,6 @@ bool esCedulaValida(const char *cedula) {
             return false;
         }
     }
-
-    if(!existeCiVisitante(cedula)) {
-        printf(ERROR_INEXISTENTE_CI);
-        return false;
-    }
     return true;
 }
 
@@ -78,7 +73,7 @@ bool esAnioValido(int anio){
     }
     return true;
 }
-char* sanitizarInput(char *input) {
+char* esNumeroValido(char *input) {
     // Eliminar salto de línea si existe
     input[strcspn(input, "\n")] = '\0';
 
@@ -91,4 +86,18 @@ char* sanitizarInput(char *input) {
     }
 
     return input;
+}
+
+bool esNombreValido(const char *nombre) {
+    if (strlen(nombre) == 0 || strlen(nombre) > MAX_NOMBRE_LENGTH) {
+        printf(ERROR_NOMBRE_INVALIDO);
+        return false;
+    }
+    for (int i = 0; i < strlen(nombre); i++) {
+        if (!isalpha((unsigned char)nombre[i]) && nombre[i] != ' ') {
+            printf(ERROR_NOMBRE_INVALIDO);
+            return false;
+        }
+    }
+    return true;
 }

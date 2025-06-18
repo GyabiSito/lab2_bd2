@@ -55,46 +55,91 @@ void cerrar_conexion(void)
     }
 }
 
-bool validarCapacidadParque(int id_parque, int mes,int dia, int cantidad)
+bool validarCapacidadParque(PARQUE parque, int mes,int dia, int cantidad)
 {
-    //Select parque where id=:idparque
-    PARQUE parque=getParque(id_parque);
-    if(parque.id_parque==ERROR_SIGNAL) return 0;
-    //Agarrar el TOTAL de reservas|pases_parques para ESE parque
-    int totalReservas=getTotalReservasParque(id_parque,mes,dia);
-
+    int totalReservas=getTotalReservasParque(parque.id_parque,mes,dia);
+    if(totalReservas == ERROR_SIGNAL) {
+        printf(ERROR_RESERVAS_PARQUE, sqlca.sqlcode);
+        return false; // Error al obtener reservas
+    }
     if(totalReservas + cantidad > parque.capacidad_maxima_diaria){
         return false;
     }
-    printf("Validando capacidad para parque %d en mes %d el dia %d con cantidad %d...\n", id_parque, mes, dia, cantidad);
     return true;
 }
-
-bool validarCapacidadParking(int id_parque, int mes, int dia, int cantidad_vehiculos)
+bool validarCapacidadParking(PARQUE parque, int mes, int dia, int cantidad_vehiculos)
 {
-    PARKING parking=getParking(id_parque);
-    int totalReservasParking=getTotalReservasParking(parking.id_parking,mes,dia);
+    PARKING parking=getParking(parque.id_parque);
+    int totalReservasParking=getTotalReservasParking(parque.id_parque,parking.id_parking,mes,dia);
+    if(parking.id_parking==ERROR_SIGNAL) return 0;
+    if (totalReservasParking + cantidad_vehiculos > parking.limite_vehiculos)
+    {
+        printf(CHAR_CAPACIDAD_PARKING_EXCEDIDA, parking.id_parking, totalReservasParking, parking.limite_vehiculos);
+        return false;
+    }
+    
     return true;
 }
-// TODO: BORRAR LOS PRINTF DE DEBUG
+int getTotalReservasParking(int id_parque, int id_parking, int mes, int dia)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int total_reservas = 0;
+    int id_parking_local = id_parking;
+    int mes_local = mes;
+    int dia_local = dia;
+    int id_parque_local = id_parque;
+    EXEC SQL END DECLARE SECTION;
+
+    // Contar la cantidad de pases_parques que incluyen parking para ese parking y fecha
+    EXEC SQL SELECT COUNT(*) INTO :total_reservas
+        FROM pases_parques pp
+        WHERE pp.incluye_parking = TRUE
+          AND pp.id_parque = :id_parque_local
+          AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
+          AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
+
+    if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND) {
+        printf("Error al obtener total de reservas de parking: %d\n", sqlca.sqlcode);
+        return ERROR_SIGNAL;
+    }
+    if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
+        printf(ERROR_CONTAR_RESERVAS_PARKING, id_parque_local, mes_local, dia_local);
+        total_reservas = 0; // No hay reservas
+    }
+    else if (total_reservas < 0) {
+        printf(ERROR_CONTAR_RESERVAS_PARKING, id_parque_local, mes_local, dia_local);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return total_reservas;
+}
 bool existeCiVisitante(const char *num)
 {
-    printf("recibi la cedula : %s\n", num);
-
     EXEC SQL BEGIN DECLARE SECTION;
     char cedula[MAX_CI_LENGTH];
     bool existe;
     EXEC SQL END DECLARE SECTION;
 
     strncpy(cedula, num, sizeof(cedula));
-    printf("Validando CI del visitante: %s...\n", cedula);
+
 
     EXEC SQL SELECT EXISTS(SELECT 1 FROM visitantes WHERE ci = :cedula) INTO :existe;
 
-    printf("**************************\n");
-    printf("Estoy comparando la cédula: %s\n", cedula);
-    printf("Resultado de la consulta: %d\n", existe);
-    printf("**************************\n");
+    if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND)
+    {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        return false; // señal de error
+    }
+
+    if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
+    {
+        printf(ERROR_INEXISTENTE_CI);
+        existe = false; // No se encontró el visitante
+    }
+    else if (existe == 0)
+    {
+        printf(ERROR_INEXISTENTE_CI);
+    }
 
     return existe;
 }
@@ -112,25 +157,24 @@ VISITANTE getVisitante(const char *cedula)
 
     strncpy(cedula_local, cedula, sizeof(cedula_local));
 
-    printf("Buscando visitante con cédula: %s...\n", cedula_local);
     EXEC SQL SELECT id_visitante, ci, nombre INTO :id_visitante, :ci, :nombre FROM visitantes WHERE ci = :cedula_local;
 
-    if (sqlca.sqlcode != SQL_SUCCESS)
+    if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND)
     {
-        printf("Error al obtener visitante: %d\n", sqlca.sqlcode);
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
         visitante.id_visitante = ERROR_SIGNAL; // señal de error
     }
     else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
     {
-        printf("No se encontró el visitante con cédula: %s\n", cedula_local);
         visitante.id_visitante = ERROR_SIGNAL;
     }
     else
     {
         visitante.id_visitante = id_visitante;
         strncpy(visitante.ci, ci, sizeof(visitante.ci));
+        visitante.ci[sizeof(visitante.ci) - 1] = '\0'; // Asegurar terminación nula
         strncpy(visitante.nombre, nombre, sizeof(visitante.nombre));
-        printf("Visitante encontrado: ID %d, CI %s, Nombre %s\n", visitante.id_visitante, visitante.ci, visitante.nombre);
+        visitante.nombre[sizeof(visitante.nombre) - 1] = '\0'; // Asegurar terminación nula
     }
 
     return visitante;
@@ -153,14 +197,14 @@ PARQUE getParque(int id){
     FROM parques p
     WHERE p.id_parque=:id_parque_local;
 
-    if (sqlca.sqlcode != SQL_SUCCESS)
+    if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND)
     {
-        printf("Error al obtener el parque: %d\n", sqlca.sqlcode);
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
         parque.id_parque = ERROR_SIGNAL; // señal de error
     }
     else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
     {
-        printf("No se encontró el parque con id: %s\n", id_parque);
+        printf(ERROR_PARQUE_NO_ENCONTRADO, id_parque);
         parque.id_parque = ERROR_SIGNAL;
     }
     else
@@ -169,7 +213,6 @@ PARQUE getParque(int id){
         parque.id_ubicacion=id_ubicacion;
         parque.capacidad_maxima_diaria=capacidad_maxima_diaria;
         strncpy(parque.nombre, nombre, sizeof(parque.nombre));
-        printf("Parque encontrado: ID %d\n, ID Ubicacion %d\n, Nombre %s\n, capacidad maxima diaria %d\n", parque.id_parque, parque.id_ubicacion, parque.nombre,parque.capacidad_maxima_diaria);
     }
     return parque;
 }
@@ -179,25 +222,24 @@ PARKING getParking(int id_parque){
         int id_parking;
         int id_parque_local=id_parque;
         int limite_vehiculos;
-        float costo_adicional;
+        int costo_adicional;
     EXEC SQL END DECLARE SECTION;
     PARKING parking;
     
-    printf("Buscando el parking del parque %d\n",id_parque);
 
     EXEC SQL SELECT id_parking, limite_vehiculos, costo_adicional 
     INTO :id_parking, :limite_vehiculos, :costo_adicional
     FROM parkings p
     WHERE p.id_parque=:id_parque_local;
 
-    if (sqlca.sqlcode != SQL_SUCCESS)
+    if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND)
     {
-        printf("Error al obtener el parking: %d\n", sqlca.sqlcode);
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
         parking.id_parking = ERROR_SIGNAL; // señal de error
     }
     else if (sqlca.sqlcode == SQL_NO_DATA_FOUND)
     {
-        printf("No se encontró el parking del parque: %s\n", id_parque);
+        printf(ERROR_NO_SE_ENCONTRO_PARKING, id_parque);
         parking.id_parking = ERROR_SIGNAL;
     }
     else
@@ -206,7 +248,6 @@ PARKING getParking(int id_parque){
         parking.id_parque=id_parque;
         parking.limite_vehiculos=limite_vehiculos;
         parking.costo_adicional=costo_adicional;
-        printf("Parking encontrado: ID %d\n, ID Parque %d\n, Limite vehiculos %d\n, Costo Adicional %d\n", parking.id_parking, parking.id_parque, parking.limite_vehiculos,parking.costo_adicional);
     }
     return parking;
 }
@@ -306,8 +347,129 @@ int getTotalReservasParque(int id_parque, int mes, int dia){
         WHERE pp.id_parque=:id_parque_local
         AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
         AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
-    
-    printf("TOTAL PASES %d\n",total_pases);
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_RESERVAS_PARQUE, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
     return total_pases;
 }
 
+PARQUE * getParquesDisponibles()
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_parque;
+    int id_ubicacion;
+    char nombre[MAX_NOMBRE_LENGTH];
+    int capacidad_maxima_diaria;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL DECLARE cursor_get_parques CURSOR FOR
+        SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria FROM parques;
+
+    EXEC SQL OPEN cursor_get_parques;
+
+    PARQUE *parques = malloc(sizeof(PARQUE) * MAX_PARQUES);
+    if (!parques) {
+        printf(ERROR_ASIGNAR_MEMORIA);
+        return NULL;
+    }
+
+    int index = 0;
+
+    while (1) {
+        EXEC SQL FETCH cursor_get_parques INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria;
+
+        if(sqlca.sqlcode != SQL_SUCCESS) {
+            if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
+                break; // Fin del cursor
+            } else {
+                printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+                free(parques);
+                EXEC SQL CLOSE cursor_get_parques;
+                return NULL; // señal de error
+            }
+        }
+        if (index >= MAX_PARQUES) {
+            printf(ERROR_MAXIMOS_PARQUES, MAX_PARQUES);
+            break; // Evita desbordamiento de memoria
+        }
+        parques[index].id_parque = id_parque;
+        parques[index].id_ubicacion = id_ubicacion;
+        strncpy(parques[index].nombre, nombre, sizeof(parques[index].nombre));
+        parques[index].capacidad_maxima_diaria = capacidad_maxima_diaria;
+        index++;
+
+    }
+    EXEC SQL CLOSE cursor_get_parques;
+    return parques;
+}
+
+int getMaxIdVisitante() {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int max_id = 0;
+    EXEC SQL END DECLARE SECTION;
+    EXEC SQL SELECT MAX(id_visitante) INTO :max_id FROM visitantes;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_MAX_ID, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return max_id;
+}
+VISITANTE crearVisitante(const char *cedula, const char *nombre) {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_visitante = getMaxIdVisitante() + 1; // Incrementar el ID máximo
+    char ci[MAX_CI_LENGTH];
+    char nombre_local[MAX_NOMBRE_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+
+    VISITANTE visitante;
+
+    strncpy(ci, cedula, sizeof(ci));
+    strncpy(nombre_local, nombre, sizeof(nombre_local));
+
+    EXEC SQL INSERT INTO visitantes (id_visitante, ci, nombre)
+        VALUES (:id_visitante, :ci, :nombre_local);
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        EXEC SQL ROLLBACK;
+        visitante.id_visitante = ERROR_SIGNAL; // señal de error
+        return visitante;
+    }
+
+    visitante.id_visitante = id_visitante;
+    strncpy(ci, cedula, sizeof(ci) - 1);
+    ci[sizeof(ci) - 1] = '\0';
+
+    strncpy(nombre_local, nombre, sizeof(nombre_local) - 1);
+    nombre_local[sizeof(nombre_local) - 1] = '\0';
+
+    EXEC SQL COMMIT;
+    return visitante;
+}
+
+long getPrecio(int id_parque, int mes, int dia) {
+    EXEC SQL BEGIN DECLARE SECTION;
+    long precio = 0;
+    int id_parque_local = id_parque;
+    int mes_local = mes;
+    int dia_local = dia;
+    EXEC SQL END DECLARE SECTION;
+
+    // Buscar el precio válido para la fecha dada (fecha_acceso debe estar entre fecha_inicio y fecha_fin)
+    EXEC SQL SELECT precio INTO :precio FROM precios 
+        WHERE id_parque = :id_parque_local
+        AND EXTRACT(MONTH FROM fecha_inicio) <= :mes_local
+        AND EXTRACT(MONTH FROM fecha_fin) >= :mes_local
+        AND EXTRACT(DAY FROM fecha_inicio) <= :dia_local
+        AND EXTRACT(DAY FROM fecha_fin) >= :dia_local;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return precio;
+}

@@ -12,5 +12,6 @@ bool esCedulaValida(const char *cedula);
 bool esMesValido(int mes);
 bool esDiaValido(int dia, int mes, int anio);
 bool esAnioValido(int anio);
-char* sanitizarInput(char *input);
+char* esNumeroValido(char *input);
+bool esNombreValido(const char *nombre);
 #endif
