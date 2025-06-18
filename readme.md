@@ -57,6 +57,7 @@ gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
 
 > **Nota:** Cuando tengamos más archivos, será recomendable crear un `Makefile` para facilitar la compilación.
 
+47184444 5 23
 
 Visitantes 100 pases 55448877
 /*
@@ -93,11 +94,21 @@ REPETIR
     SINO
         MOSTRAR "SIN CUPOS"
     FIN SI
+    HACER VENTA
 
     PREGUNTAR: ¿DESEA INGRESAR OTRA VENTA?
+
 HASTA QUE RESPUESTA SEA "NO"
 
 VOLVER A MENÚ
 
 
+VALIDAR LAS FECHAS
+HACER TRIGGER EN SQL PARA QUE AL MOMENTO DE INSERTAR VALIDE LAS CAPACIDADES
+HACER FUNCION EN SQL QUE VALIDE LAS FECHAS AL MOMENTO DE INSERTAR ( NO PUEDO INSERTAR FECHAS DEL PASADO )
+
+
+
+
 */
+
