@@ -122,3 +122,14 @@ system("cls");
 system("clear");
 #endif 
 }
+
+void obtener_fecha_hora_actual(char *fecha, char *fecha_hora) {
+    time_t t = time(NULL);
+    struct tm *actual = localtime(&t);
+
+    // Formato "YYYY-MM-DD"
+    strftime(fecha, 11, "%Y-%m-%d", actual);
+
+    // Formato "YYYY-MM-DD HH:MM:SS"
+    strftime(fecha_hora, 20, "%Y-%m-%d %H:%M:%S", actual);
+}

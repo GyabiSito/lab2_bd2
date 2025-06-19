@@ -82,7 +82,7 @@
 #define CHAR_INGRESE_DIA "Ingrese un dia entre 1 y %d: \n"
 #define CHAR_INGRESE_MES "Ingrese el mes (1-12):\n"
 #define CHAR_INGRESE_ANIO "Ingrese año \n"
-#define CHAR_INGRESE_CEDULA "Ingrese la cédula del visitante (8 dígitos):\n"
+#define CHAR_INGRESE_CEDULA "Ingrese su cédula (8 dígitos):\n"
 #define CHAR_INGRESE_ID_PARQUE "Ingrese el ID del parque (1-4):\n"
 #define CHAR_INGRESE_FECHA "Ingrese la fecha (YYYY-MM-DD):\n"
 #define CHAR_VISITANTE_ENCONTRADO "Visitante encontrado: %s (ID: %d)\n"
@@ -120,7 +120,12 @@
 #define CHAR_INGRESE_TIPO_TARJETA "Tipo de tarjeta (1: Débito, 0: Crédito): "
 #define CHAR_ID_PARQUE_INVALIDO "ID de parque inválido. Intente de nuevo.\n"
 #define CHAR_INGRESE_NOMBRE_VISITANTE "Ingrese el nombre del visitante: \n"
-
+#define CHAR_CLIENTE_INEXISTENTE "Cliente no existe, registrese\n"
+#define CHAR_INGRESE_NOMBRE_CLIENTE "Ingrese su nombre (máximo %d caracteres): "
+#define CHAR_INGRESE_CORREO_CLIENTE "Ingrese su correo electrónico: "
+#define CHAR_NOMBRE_INVALIDO "Nombre inválido. Intente nuevamente.\n"
+#define CHAR_CORREO_INVALIDO "Correo inválido. Intente nuevamente.\n"
+#define CHAR_CLIENTE_REGISTRADO "Cliente registrado:\nID: %s\nNombre: %s\nCorreo: %s\n"
 //********** FIN CHARS *****************/
 
 //********** ERRORES DE ENTRADA *****************/

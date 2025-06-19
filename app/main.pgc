@@ -109,6 +109,26 @@ VOLVER A MENÚ
 */
 void realizarVenta() {
     clearConsole();
+    char ci_cliente[MAX_CI_LENGTH];
+
+    do {
+        printf(CHAR_INGRESE_CEDULA);
+        scanf("%s", ci_cliente);
+
+        if (!esCedulaValida(ci_cliente)) {
+            clearConsole();
+            printf(CEDULA_INVALIDA_INTENTE_NUEVAMENTE);
+        }
+    } while (!esCedulaValida(ci_cliente));
+
+    
+    if(!getCliente(ci_cliente)){
+        clearConsole();
+        printf(CHAR_CLIENTE_INEXISTENTE);
+        registrarCliente(ci_cliente);
+        return;
+    }
+    printf("El cliente existe %s",ci_cliente);
     int id_parque;
     int cantidad_vehiculos;
     printf(CHAR_IMPRIMIR_ASTERISCO);
@@ -449,8 +469,33 @@ void realizarVenta() {
     printf("Registrando venta...\n");
 
     //INSERTAR EN VISITANTES (hecho);
+    // INSERTAR EN COMPRA
+    // Variables para fecha
+    char fecha_actual[11];     // "YYYY-MM-DD"
+    char fecha_hora[20];       // "YYYY-MM-DD HH:MM:SS"
+
+    // Obtener fecha y hora actuales
+    obtener_fecha_hora_actual(fecha_actual, fecha_hora);
+
+    // Llenar struct COMPRA
+    COMPRA compra;
+    compra.cant_pases = cantidad_entradas;
+    compra.cant_vehiculos = cantidad_vehiculos;
+    strcpy(compra.cvv, cvv);
+    strcpy(compra.debito_credito, deseaTarjeta == 1 ? "D" : "C");
+    strcpy(compra.fecha_compra, fecha_actual);
+    strcpy(compra.hora_compra, fecha_hora);
+    strcpy(compra.fecha_vencimiento, fecha_vencimiento); // Asegúrate que fecha_vencimiento es string
+    compra.id_cliente = 0;
+    compra.monto_total = precio_total;
+    strcpy(compra.numero_tarjeta, numero_tarjeta);
+
     //FOREACH VISITANTE
-    //  INSERTAR EN PASES
+    // for(visitantes){
+    //     //  INSERTAR EN PASES
+        
+        
+    // }
     //END FOREACH
 
 

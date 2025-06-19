@@ -473,3 +473,62 @@ long getPrecio(int id_parque, int mes, int dia) {
 
     return precio;
 }
+bool getCliente(const char* ci_cliente){
+    EXEC SQL BEGIN DECLARE SECTION;
+    bool ci_cliente_local=ci_cliente;
+    bool ok=false;
+    EXEC SQL END DECLARE SECTION;
+    
+    // Buscar el precio válido para la fecha dada (fecha_acceso debe estar entre fecha_inicio y fecha_fin)
+    EXEC SQL SELECT EXISTS(SELECT 1 FROM clientes c WHERE c.ci = :ci_cliente_local) INTO :ok; 
+    
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        ok=false;
+        return ok;
+    }
+    return ok;
+
+}
+
+
+int esCorreoValido(const char *correo) {
+    return (strchr(correo, '@') && strchr(correo, '.'));
+}
+
+
+void registrarCliente(const char* id_cliente) {
+    clearConsole();
+    char nombre[MAX_NOMBRE_LENGTH + 1];
+    char correo[MAX_LENGTH + 1];
+    bool nombreValido = false;
+
+    do {
+        printf(CHAR_INGRESE_NOMBRE_CLIENTE, MAX_NOMBRE_LENGTH);
+        fgets(nombre, sizeof(nombre), stdin);
+        nombre[strcspn(nombre, "\n")] = '\0';
+    
+        nombreValido = esNombreValido(nombre); // Solo una vez por iteración
+    
+    } while (!nombreValido);
+    
+    // Pedir correo
+    do {
+        printf(CHAR_INGRESE_CORREO_CLIENTE);
+        fgets(correo, sizeof(correo), stdin);
+        correo[strcspn(correo, "\n")] = '\0';
+
+        if (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo)) {
+            printf(CHAR_CORREO_INVALIDO);
+        }
+    } while (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo));
+
+    printf(CHAR_CLIENTE_REGISTRADO, id_cliente, nombre, correo);
+}
+
+
+
+void insertCompra(COMPRA compra){
+    return;
+}
+

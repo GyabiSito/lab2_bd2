@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "structs.h"
 #include "constants.h"
+#include "utils.h"
 
 DBSingleton *getInstance();
 void cerrar_conexion();
@@ -27,5 +28,7 @@ PARKING getParking(int id_parque);
 PARQUE* getParquesDisponibles();
 VISITANTE crearVisitante(const char *cedula, const char *nombre);
 long getPrecio(int id_parque, int mes, int dia);
-
+bool getCliente(const char * ci_cliente);
+void registrarCliente(const char *ci_cliente);
+void insertCompra(COMPRA compra);
 #endif
