@@ -1,17 +1,116 @@
+/* Processed by ecpg (17.5 (Debian 17.5-1.pgdg120+1)) */
+/* These include files are added by the preprocessor */
+#include <ecpglib.h>
+#include <ecpgerrno.h>
+#include <sqlca.h>
+/* End of automatic include section */
+
+#line 1 "main.pgc"
 #include "main.h"
 
-EXEC SQL INCLUDE sqlca;
-EXEC SQL WHENEVER SQLERROR SQLPRINT;
-EXEC SQL WHENEVER SQLWARNING SQLPRINT;
 
-EXEC SQL BEGIN DECLARE SECTION;
-int id_parque;
-int id_ubicacion;
-char nombre[MAX_NOMBRE_LENGTH];
-int capacidad_maxima_diaria;
-int cedula_visitante;
+#line 1 "/usr/include/postgresql/sqlca.h"
+#ifndef POSTGRES_SQLCA_H
+#define POSTGRES_SQLCA_H
 
-EXEC SQL END DECLARE SECTION;
+#ifndef PGDLLIMPORT
+#if  defined(WIN32) || defined(__CYGWIN__)
+#define PGDLLIMPORT __declspec (dllimport)
+#else
+#define PGDLLIMPORT
+#endif							/* __CYGWIN__ */
+#endif							/* PGDLLIMPORT */
+
+#define SQLERRMC_LEN	150
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+struct sqlca_t
+{
+	char		sqlcaid[8];
+	long		sqlabc;
+	long		sqlcode;
+	struct
+	{
+		int			sqlerrml;
+		char		sqlerrmc[SQLERRMC_LEN];
+	}			sqlerrm;
+	char		sqlerrp[8];
+	long		sqlerrd[6];
+	/* Element 0: empty						*/
+	/* 1: OID of processed tuple if applicable			*/
+	/* 2: number of rows processed				*/
+	/* after an INSERT, UPDATE or				*/
+	/* DELETE statement					*/
+	/* 3: empty						*/
+	/* 4: empty						*/
+	/* 5: empty						*/
+	char		sqlwarn[8];
+	/* Element 0: set to 'W' if at least one other is 'W'	*/
+	/* 1: if 'W' at least one character string		*/
+	/* value was truncated when it was			*/
+	/* stored into a host variable.             */
+
+	/*
+	 * 2: if 'W' a (hopefully) non-fatal notice occurred
+	 */	/* 3: empty */
+	/* 4: empty						*/
+	/* 5: empty						*/
+	/* 6: empty						*/
+	/* 7: empty						*/
+
+	char		sqlstate[5];
+};
+
+struct sqlca_t *ECPGget_sqlca(void);
+
+#ifndef POSTGRES_ECPG_INTERNAL
+#define sqlca (*ECPGget_sqlca())
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
+#line 3 "main.pgc"
+
+/* exec sql whenever sqlerror  sqlprint ; */
+#line 4 "main.pgc"
+
+/* exec sql whenever sql_warning  sqlprint ; */
+#line 5 "main.pgc"
+
+
+/* exec sql begin declare section */
+ 
+ 
+ 
+ 
+ 
+
+
+#line 8 "main.pgc"
+ int id_parque ;
+ 
+#line 9 "main.pgc"
+ int id_ubicacion ;
+ 
+#line 10 "main.pgc"
+ char nombre [ MAX_NOMBRE_LENGTH ] ;
+ 
+#line 11 "main.pgc"
+ int capacidad_maxima_diaria ;
+ 
+#line 12 "main.pgc"
+ int cedula_visitante ;
+/* exec sql end declare section */
+#line 14 "main.pgc"
+
 
 int main() {
     clearConsole();
@@ -712,7 +811,15 @@ void realizarVenta() {
     }
     printf(CHAR_IMPRIMIR_ASTERISCO);
 
-    EXEC SQL COMMIT;
+    { ECPGtrans(__LINE__, NULL, "commit");
+#line 715 "main.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') sqlprint();
+#line 715 "main.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 715 "main.pgc"
+
     if(sqlca.sqlcode != 0) {
         printf("Error al realizar la transacción.\n");
         printf("sqlca: %s\n", sqlca.sqlerrm.sqlerrmc);

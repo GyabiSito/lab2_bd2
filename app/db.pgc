@@ -632,12 +632,7 @@ COMPRA insertarCompra(COMPRA compra){
     snprintf(fecha_vencimiento, sizeof(fecha_vencimiento), "%s", compra.fecha_vencimiento);
     strncpy(cvv, compra.cvv, sizeof(cvv));
 
-    printf("DEBUG -> id_compra: %d, id_cliente: %d, fecha_compra: %s, hora_compra: %s\n",
-        compra.id_compra, compra.id_cliente, compra.fecha_compra, compra.hora_compra);
-    printf("DEBUG -> monto_total: %ld, debito_credito: %s, numero_tarjeta: %s, fecha_vencimiento: %s, cvv: %s\n",
-        compra.monto_total, compra.debito_credito, compra.numero_tarjeta, compra.fecha_vencimiento, compra.cvv);
-    printf("DEBUG -> cant_pases: %d, cant_vehiculos: %d\n", compra.cant_pases, compra.cant_vehiculos);
-
+ 
     
     EXEC SQL INSERT INTO COMPRAS (
             id_compra,
@@ -678,7 +673,7 @@ COMPRA insertarCompra(COMPRA compra){
         return compra; // señal de error
     }
 
-    EXEC SQL COMMIT;
+    // EXEC SQL COMMIT;
     compra.id_compra = id_compra; // Asignar el ID de compra generado
     return compra; // Retornar la compra con el ID asignado
 }
@@ -787,7 +782,7 @@ PASE insertarPase(PASE pase){
         return pase; // señal de error
     }
 
-    EXEC SQL COMMIT; // Confirmar la transacción
+    // EXEC SQL COMMIT; // Confirmar la transacción
     return pase; // Retornar el pase con el ID asignado
 }
 
@@ -834,7 +829,7 @@ PASE_PARQUE insertarPaseParque(PASE_PARQUE pase_parque) {
         return pase_parque; // señal de error
     }
 
-    EXEC SQL COMMIT; // Confirmar la transacción
+    // EXEC SQL COMMIT; // Confirmar la transacción
     
     return pase_parque; // Retornar el pase parque con el ID asignado
 }

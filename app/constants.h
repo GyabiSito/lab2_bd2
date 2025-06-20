@@ -144,7 +144,7 @@
 #define CHAR_INGRESE_CI_CLIENTE "Ingrese su cédula (máximo %d dígitos): \n"
 #define CHAR_CLIENTE_EXISTE "El cliente con cédula %s ya existe en la base de datos.\n"
 #define CHAR_CLIENTE_ENCONTRADO "Cliente encontrado: %s (Cédula: %s)\n"
-#define CHAR_MOSTRAR_COMPRA "Compra realizada con éxito:\n ID Compra: %ld\nID Cliente: %d\nFecha: %s\nHora: %s\nMonto Total (precio pases %ld + IVA %ld): %ld\nTipo de Pago: %s\nNúmero de Tarjeta: %s\nFecha de Vencimiento: %s\nCVV: %s\nCantidad de Entradas: %d\nCantidad de Vehículos: %d\n"
+#define CHAR_MOSTRAR_COMPRA "Compra realizada con éxito:\n ID Compra: %ld\nID Cliente: %d\nFecha: %s\nHora: %s\nMonto Total (precio pases + parking si incluye %ld + IVA %ld): %ld\nTipo de Pago: %s\nNúmero de Tarjeta: %s\nFecha de Vencimiento: %s\nCVV: %s\nCantidad de Entradas: %d\nCantidad de Vehículos: %d\n"
 #define CHAR_PASES_EXISTENTES "El visitante ya tiene pases para la fecha ingresada.\n"
 #define CHAR_INGRESAR_VISITANTE "Ingrese los datos del visitante %d de %d:\n"
 #define CHAR_BUSCANDO_PASES "Buscando pases del visitante (ID: %d) para el día %d/%d...\n"
@@ -153,6 +153,11 @@
 #define CHAR_PRECIO_TOTAL "Precio total de todos los pases: %ld\n"
 #define CHAR_NO_RESERVADO_PARKING "No se ha reservado parking.\n"
 #define CHAR_MOSTRAR_COSTO_PARQUE "Costo del parque: %ld\n"
+#define CHAR_PRECIO_PASE "Precio del pase: %ld\n"
+#define CHAR_PRECIO_PARKING "Precio del parking: %ld\n"
+#define CHAR_IMPRIMIR_IVA "IVA: %ld\n"
+#define CHAR_IMPRIMIR_MONTO_TOTAL_SIN_IVA "Monto total (sin IVA): %ld\n"
+#define CHAR_IMPRIMIR_MONTO_TOTAL_CON_IVA "Monto total (con IVA): %ld\n"
 //********** FIN CHARS *****************/
 
 //********** ERRORES DE ENTRADA *****************/

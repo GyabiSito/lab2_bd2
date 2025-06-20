@@ -51,8 +51,13 @@ Utiliza la IP obtenida para conectarte desde pgAdmin en tu navegador.
 Estos comandos están automatizados en el script `./compilar.sh`.
 Compila el archivo fuente `.pgc` y el programa principal:
 ```bash
-ecpg main.pgc
-gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
+chmod 777 ./programa
+./compilar.sh
+```
+
+Tambien se puede compilar con Make **Recomendable**
+```bash
+make run
 ```
 # Triggers
 
@@ -174,16 +179,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-
-
 CREATE OR REPLACE TRIGGER trigger_validar_limite_vehiculos
 BEFORE INSERT ON pases_parques
 FOR EACH ROW
 EXECUTE FUNCTION validar_limite_vehiculos();
-
-
-
 ```
-
-
