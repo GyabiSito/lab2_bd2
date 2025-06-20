@@ -46,6 +46,8 @@
 //********** STRUCTS *****************/
 #define ERROR_SIGNAL -1
 #define IVA 1.22
+#define IVA_NUM 122
+#define IVA_DEN 100
 //********** FIN STRUCTS *****************/
 
 //********** LONGITUDES MAXIMAS *****************/
@@ -142,7 +144,7 @@
 #define CHAR_INGRESE_CI_CLIENTE "Ingrese su cédula (máximo %d dígitos): \n"
 #define CHAR_CLIENTE_EXISTE "El cliente con cédula %s ya existe en la base de datos.\n"
 #define CHAR_CLIENTE_ENCONTRADO "Cliente encontrado: %s (Cédula: %s)\n"
-#define CHAR_MOSTRAR_COMPRA "Compra realizada con éxito:\n ID Compra: %ldID Cliente: %d\nFecha: %s\nHora: %s\nMonto Total (precio pases %ld+ IVA %ld): %ld\nTipo de Pago: %s\nNúmero de Tarjeta: %s\nFecha de Vencimiento: %s\nCVV: %s\nCantidad de Entradas: %d\nCantidad de Vehículos: %d\n"
+#define CHAR_MOSTRAR_COMPRA "Compra realizada con éxito:\n ID Compra: %ld\nID Cliente: %d\nFecha: %s\nHora: %s\nMonto Total (precio pases %ld + IVA %ld): %ld\nTipo de Pago: %s\nNúmero de Tarjeta: %s\nFecha de Vencimiento: %s\nCVV: %s\nCantidad de Entradas: %d\nCantidad de Vehículos: %d\n"
 #define CHAR_PASES_EXISTENTES "El visitante ya tiene pases para la fecha ingresada.\n"
 #define CHAR_INGRESAR_VISITANTE "Ingrese los datos del visitante %d de %d:\n"
 #define CHAR_BUSCANDO_PASES "Buscando pases del visitante (ID: %d) para el día %d/%d...\n"

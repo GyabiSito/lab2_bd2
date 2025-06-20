@@ -609,6 +609,7 @@ int getMaxIdCompra() {
 
 
 COMPRA insertarCompra(COMPRA compra){
+    
     int id_compra = getMaxIdCompra() + 1; // Incrementar el ID máximo
     EXEC SQL BEGIN DECLARE SECTION;
     int id_compra_local = id_compra;
@@ -631,14 +632,38 @@ COMPRA insertarCompra(COMPRA compra){
     snprintf(fecha_vencimiento, sizeof(fecha_vencimiento), "%s", compra.fecha_vencimiento);
     strncpy(cvv, compra.cvv, sizeof(cvv));
 
+    printf("DEBUG -> id_compra: %d, id_cliente: %d, fecha_compra: %s, hora_compra: %s\n",
+        compra.id_compra, compra.id_cliente, compra.fecha_compra, compra.hora_compra);
+    printf("DEBUG -> monto_total: %ld, debito_credito: %s, numero_tarjeta: %s, fecha_vencimiento: %s, cvv: %s\n",
+        compra.monto_total, compra.debito_credito, compra.numero_tarjeta, compra.fecha_vencimiento, compra.cvv);
+    printf("DEBUG -> cant_pases: %d, cant_vehiculos: %d\n", compra.cant_pases, compra.cant_vehiculos);
 
     
-    EXEC SQL INSERT INTO compras (id_compra, id_cliente, fecha_compra, hora_compra, monto_total,
-                                  debito_credito, numero_tarjeta, fecha_vencimiento, cvv,
-                                  cant_pases, cant_vehiculos)
-             VALUES (:id_compra_local, :id_cliente_local, :fecha_compra, :hora_compra,
-                     :monto_total_local, :debito_credito, :numero_tarjeta,
-                     :fecha_vencimiento, :cvv, :cant_pases, :cant_vehiculos);
+    EXEC SQL INSERT INTO COMPRAS (
+            id_compra,
+            id_cliente,
+            fecha_compra,
+            hora_compra,
+            monto_total,
+            debito_credito,
+            numero_tarjeta,
+            fecha_vencimiento,
+            cvv,
+            cant_pases,
+            cant_vehiculos
+        ) VALUES (
+            :id_compra_local,
+            :id_cliente_local,
+            :fecha_compra,
+            :hora_compra,
+            :monto_total_local,
+            :debito_credito,
+            :numero_tarjeta,
+            :fecha_vencimiento,
+            :cvv,
+            :cant_pases,
+            :cant_vehiculos
+        );
 
     if (sqlca.sqlcode != SQL_SUCCESS) {
         printf(ERROR_INSERTAR_COMPRA, sqlca.sqlcode);
@@ -646,7 +671,7 @@ COMPRA insertarCompra(COMPRA compra){
         printf("sqlca.sqlerrm: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
         
         EXEC SQL ROLLBACK; // Deshacer la transacción en caso de error
-        printf("DEBUG -> id_compra: %d, id_cliente: %d, fecha_compra: %s, hora_compra: %s, monto_total: %ld, debito_credito: %s, numero_tarjeta: %s, fecha_vencimiento: %s, cvv: %s, cant_pases: %d, cant_vehiculos: %d\n",
+        printf("DEBUG -> id_compra: %d, id_cliente: %d, fecha_compra: %s, hora_compra: %s, monto_total: %f, debito_credito: %s, numero_tarjeta: %s, fecha_vencimiento: %s, cvv: %s, cant_pases: %d, cant_vehiculos: %d\n",
             id_compra_local, id_cliente_local, fecha_compra, hora_compra, monto_total_local,
             debito_credito, numero_tarjeta, fecha_vencimiento, cvv, cant_pases, cant_vehiculos);
         compra.id_compra = ERROR_SIGNAL; // señal de error

@@ -23,6 +23,9 @@ int main() {
 
     int opcion;
     do {
+        //haz un cin.ignore
+        
+        // clearConsole();
         mostrarMenu();
         int result = scanf("%d", &opcion);
         while (getchar() != '\n'); // limpia el buffer
@@ -45,7 +48,9 @@ int main() {
                 break;
             case 4:
                 registrarCliente();
+                break;
             case 0:
+                cerrar_conexion();
                 printf(CHAR_SALIENDO);
                 break;
         }
@@ -451,11 +456,17 @@ void realizarVenta() {
 
     long precio_entrada = precio.precio;
     precio_total += precio_entrada * cantidad_entradas;
+    long precio_parking = 0;
     if (cantidad_vehiculos > 0) {
         PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
-        precio_total += parkingSeleccionado.costo_adicional * cantidad_vehiculos;
+        precio_parking = parkingSeleccionado.costo_adicional * cantidad_vehiculos;
     }
-    long monto_final_iva = precio_total * IVA;
+    precio_total += precio_parking;
+
+    long monto_total_con_iva = precio_total + (precio_total * IVA / 100);
+    long iva_aplicado = precio_total * IVA / 100;
+
+
     // PREGUNTAR CONFIRMACIÓN
 
     int confirmar;
@@ -619,14 +630,17 @@ void realizarVenta() {
     strcpy(compra.hora_compra, fecha_hora);
     
     compra.id_cliente = cliente.id_cliente;
-    compra.monto_total = monto_final_iva;
-
+    compra.monto_total = monto_total_con_iva;
 
     // Insertar compra en la base de datos
     COMPRA compra_insertada = insertarCompra(compra);
     if(compra_insertada.id_compra == ERROR_SIGNAL) {
-        clearConsole();
         printf(ERROR_INSERTAR_COMPRA, compra.id_compra);
+        printf("Error al insertar la compra con ID: %d\n", compra.id_compra);
+        printf("sqlca: %s\n", sqlca.sqlerrm.sqlerrmc);
+        printf("sqlcode: %d\n", sqlca.sqlcode);
+        printf("sqlstate: %s\n", sqlca.sqlstate);
+
         return;
     }
     // ************************************************************************************PASE************************************************************************************
@@ -642,7 +656,6 @@ void realizarVenta() {
         time_t now = time(NULL);
         snprintf(pase[i].codigo_qr, sizeof(pase[i].codigo_qr), "QR_%d_%d_%d_%ld", pase[i].id_visitante, pase[i].id_compra, pase[i].id_pase, now);
         pase[i].precio_total = precio_entrada; // El precio total del pase es el precio de la entrada
-        precio_total += pase[i].precio_total;
         pase_insertado[i] = insertarPase(pase[i]);
 
 
@@ -683,16 +696,17 @@ void realizarVenta() {
         compra_insertada.id_cliente, 
         compra_insertada.fecha_compra, 
         compra_insertada.hora_compra, 
-        precio_total, // precio pases
-        monto_final_iva - precio_total, // IVA
-        compra_insertada.monto_total, // total con IVA
-        compra_insertada.debito_credito, 
-        compra_insertada.numero_tarjeta, 
-        compra_insertada.fecha_vencimiento, 
-        compra_insertada.cvv, 
-        compra_insertada.cant_pases, 
+        precio_total,
+        iva_aplicado,
+        compra_insertada.monto_total,
+        compra_insertada.debito_credito,
+        compra_insertada.numero_tarjeta,
+        compra_insertada.fecha_vencimiento,
+        compra_insertada.cvv,
+        compra_insertada.cant_pases,
         compra_insertada.cant_vehiculos
     );
+
     printf(CHAR_IMPRIMIR_ASTERISCO);
     for (int i = 0; i < cantidad_entradas; i++) {
         
@@ -713,7 +727,6 @@ void realizarVenta() {
         );
         printf(CHAR_PRECIO_TOTAL, precio_total);
         if(cantidad_vehiculos > 0) {
-
             PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
             printf(CHAR_COSTO_ADICIONAL_PARKING, parkingSeleccionado.costo_adicional);
         } else {
