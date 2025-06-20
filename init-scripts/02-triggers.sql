@@ -1,63 +1,3 @@
-# Dependencias (opcional)
-Dentro del contenedor, instala las dependencias necesarias (si no están instaladas):
-
-Ya deberian de estar instaladas debido al Dockerfile
-```bash
-apt-get update && apt-get install -y libecpg-dev postgresql-client postgresql-contrib build-essential vim net-tools iputils-ping
-```
-
-# Levantar los Contenedores
-
-Para iniciar los contenedores, ejecuta:
-
-```bash
-docker-compose up --build -d
-```
-
----
-
-## Acceder al Contenedor
-
-Para acceder a la terminal del contenedor de la aplicación C:
-
-```bash
-docker exec -it contenedor-postgres /bin/bash
-```
-
-O para cualquier contenedor, usa:
-
-```bash
-docker exec -it <nombre_del_contenedor> bash
-```
-
-Dentro del contenedor puedes administrar PostgreSQL o instalar dependencias adicionales según sea necesario.
-
----
-
-## Obtener la IP del Contenedor
-
-Para obtener la IP del contenedor de PostgreSQL:
-
-```bash
-docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' contenedor-postgres
-```
-
-Utiliza la IP obtenida para conectarte desde pgAdmin en tu navegador.
-
----
-
-# Compilar y Ejecutar Código en C
-
-Estos comandos están automatizados en el script `./compilar.sh`.
-Compila el archivo fuente `.pgc` y el programa principal:
-```bash
-ecpg main.pgc
-gcc -I/usr/include/postgresql main.c db_singleton.c -lecpg -o programa
-```
-# Triggers
-
-## Validar Capacidad Parque
-```sql
 CREATE OR REPLACE FUNCTION validar_capacidad_parque(
     id_parque_param INT,
     fecha_acceso_param DATE,
@@ -106,11 +46,9 @@ CREATE TRIGGER trg_validar_capacidad_parque
 BEFORE INSERT ON pases_parques
 FOR EACH ROW
 EXECUTE FUNCTION trigger_validar_capacidad();
-```
 
-## Validar Capacidad Parking
 
-```sql
+
 CREATE OR REPLACE FUNCTION validar_capacidad_parking(
     p_id_parque INT,
     p_fecha DATE,
@@ -157,11 +95,3 @@ CREATE TRIGGER trigger_check_capacidad_parking
 BEFORE INSERT ON pases_parques
 FOR EACH ROW
 EXECUTE FUNCTION trg_validar_capacidad_parking();
-
-
-```
-
-VALIDAR LAS FECHAS
-HACER FUNCION EN SQL QUE VALIDE LAS FECHAS AL MOMENTO DE INSERTAR ( NO PUEDO INSERTAR FECHAS DEL PASADO )
-
-
