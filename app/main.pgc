@@ -245,6 +245,12 @@ void realizarVenta() {
     char buffer[100];
     int cantidad_entradas;
     int es_valido;
+    
+    if(entradasReservadas == parqueSeleccionado.capacidad_maxima_diaria) {
+        clearConsole();
+        printf(CHAR_NO_ESPACIOS_PARQUE, parqueSeleccionado.id_parque, mes, dia);
+        return;
+    }
 
     do {
         printf(TOTAL_ENTRADAS_RESERVADAS, parqueSeleccionado.id_parque, mes, dia, entradasReservadas);

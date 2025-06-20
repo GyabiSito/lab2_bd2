@@ -89,14 +89,16 @@ int getTotalReservasParking(int id_parque, int id_parking, int mes, int dia)
     int dia_local = dia;
     int id_parque_local = id_parque;
     EXEC SQL END DECLARE SECTION;
-
-    // Contar la cantidad de pases_parques que incluyen parking para ese parking y fecha
+    
+    // Contar la cantidad total de vehículos reservados para ese parking y fecha
     EXEC SQL SELECT COUNT(*) INTO :total_reservas
-        FROM pases_parques pp
-        WHERE pp.incluye_parking = TRUE
-          AND pp.id_parque = :id_parque_local
+        FROM compras c
+        JOIN pases p ON c.id_compra = p.id_compra
+        JOIN pases_parques pp ON p.id_pase = pp.id_pase
+        WHERE pp.id_parque = :id_parque_local
           AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
-          AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
+          AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local
+          AND pp.incluye_parking = TRUE;
 
     if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND) {
         printf(ERROR_OBTENER_TOTAL_RESERVAS_PARKING, sqlca.sqlcode);
@@ -502,7 +504,10 @@ PRECIO getPrecio(int id_parque, const char* fecha_acceso) {
         INTO :id_precio, :precio, :fecha_inicio, :fecha_fin
         FROM precios p
         WHERE p.id_parque = :id_parque_local
-        AND :fecha_acceso_local BETWEEN p.fecha_inicio AND p.fecha_fin;
+        AND :fecha_acceso_local BETWEEN p.fecha_inicio AND p.fecha_fin
+        ORDER BY fecha_inicio DESC
+        LIMIT 1;
+
 
     if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
         printf(ERROR_PRECIO_NO_ENCONTRADO, id_parque_local, fecha_acceso_local);

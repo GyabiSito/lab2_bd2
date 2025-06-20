@@ -3,7 +3,7 @@ Dentro del contenedor, instala las dependencias necesarias (si no están instala
 
 Ya deberian de estar instaladas debido al Dockerfile
 ```bash
-apt-get update && apt-get install -y libecpg-dev postgresql-client postgresql-contrib build-essential vim net-tools iputils-ping
+apt-get update && apt-get install -y libecpg-dev postgresql-client postgresql-contrib build-essential vim net-tools iputils-ping make
 ```
 
 # Levantar los Contenedores
