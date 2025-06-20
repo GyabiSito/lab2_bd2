@@ -100,9 +100,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_validar_capacidad_parque ON pases_parques;
 
-CREATE TRIGGER trg_validar_capacidad_parque
+
+CREATE OR REPLACE TRIGGER trg_validar_capacidad_parque
 BEFORE INSERT ON pases_parques
 FOR EACH ROW
 EXECUTE FUNCTION trigger_validar_capacidad();
@@ -111,57 +111,79 @@ EXECUTE FUNCTION trigger_validar_capacidad();
 ## Validar Capacidad Parking
 
 ```sql
-CREATE OR REPLACE FUNCTION validar_capacidad_parking(
-    p_id_parque INT,
-    p_fecha DATE,
-    p_cantidad INT
-) RETURNS BOOLEAN AS $$
-DECLARE
-    total_actual INT;
-    limite INT;
-BEGIN
-    -- Obtener el límite de vehículos del parking asociado al parque
-    SELECT p.limite_vehiculos INTO limite
-    FROM parkings p
-    WHERE p.id_parque = p_id_parque;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Parking no encontrado para parque %', p_id_parque;
-    END IF;
-
-    -- Contar la cantidad de pases_parques con parking ya reservados en esa fecha
-    SELECT COUNT(*) INTO total_actual
-    FROM pases_parques pp
-    WHERE pp.id_parque = p_id_parque
-      AND pp.incluye_parking = TRUE
-      AND pp.fecha_acceso = p_fecha;
-
-    RETURN (total_actual + p_cantidad) <= limite;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE FUNCTION trg_validar_capacidad_parking()
+CREATE OR REPLACE FUNCTION validar_limite_vehiculos()
 RETURNS TRIGGER AS $$
+DECLARE
+    limite INTEGER;
+    total_vehiculos_reservados INTEGER;
+    vehiculos_a_insertar INTEGER;
+    compra_ya_contada BOOLEAN;
 BEGIN
     IF NEW.incluye_parking THEN
-        IF NOT validar_capacidad_parking(NEW.id_parque, NEW.fecha_acceso, 1) THEN
-            RAISE EXCEPTION 'Capacidad de parking excedida para el parque % en la fecha %', NEW.id_parque, NEW.fecha_acceso;
+        SELECT limite_vehiculos INTO limite
+        FROM parkings
+        WHERE id_parque = NEW.id_parque;
+
+        IF limite IS NULL THEN
+            RAISE EXCEPTION 'No se encontró límite de vehículos para el parque %', NEW.id_parque;
+        END IF;
+
+        -- Verifico si la compra de este pase ya está contada en reservas previas
+        SELECT EXISTS (
+            SELECT 1
+            FROM pases_parques pp
+            JOIN pases p ON pp.id_pase = p.id_pase
+            WHERE p.id_compra = (SELECT id_compra FROM pases WHERE id_pase = NEW.id_pase)
+              AND pp.id_parque = NEW.id_parque
+              AND pp.fecha_acceso = NEW.fecha_acceso
+              AND pp.incluye_parking = TRUE
+              AND NOT (pp.id_pase = NEW.id_pase) -- Excluyo el pase actual que estoy insertando
+        ) INTO compra_ya_contada;
+
+        -- Sumo vehículos de compras distintas ya contadas para la fecha y parque
+        SELECT COALESCE(SUM(compras_unicas.cant_vehiculos), 0)
+        INTO total_vehiculos_reservados
+        FROM (
+            SELECT DISTINCT c.id_compra, c.cant_vehiculos
+            FROM compras c
+            JOIN pases p ON c.id_compra = p.id_compra
+            JOIN pases_parques pp ON p.id_pase = pp.id_pase
+            WHERE pp.id_parque = NEW.id_parque
+              AND pp.fecha_acceso = NEW.fecha_acceso
+              AND pp.incluye_parking = TRUE
+        ) AS compras_unicas;
+
+        -- Obtengo cantidad de vehículos de la compra del pase actual
+        SELECT c.cant_vehiculos INTO vehiculos_a_insertar
+        FROM compras c
+        JOIN pases p ON c.id_compra = p.id_compra
+        WHERE p.id_pase = NEW.id_pase;
+
+        -- Si la compra ya fue contada, no sumo vehículos a insertar
+        IF compra_ya_contada THEN
+            vehiculos_a_insertar := 0;
+        END IF;
+
+        IF total_vehiculos_reservados + vehiculos_a_insertar > limite THEN
+            RAISE EXCEPTION 'Capacidad de vehículos alcanzada para el parque % en la fecha % (reservados: %, intenta añadir: %, límite: %)',
+                NEW.id_parque, NEW.fecha_acceso, total_vehiculos_reservados, vehiculos_a_insertar, limite;
         END IF;
     END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_check_capacidad_parking
+
+
+
+CREATE OR REPLACE TRIGGER trigger_validar_limite_vehiculos
 BEFORE INSERT ON pases_parques
 FOR EACH ROW
-EXECUTE FUNCTION trg_validar_capacidad_parking();
+EXECUTE FUNCTION validar_limite_vehiculos();
+
 
 
 ```
-
-VALIDAR LAS FECHAS
-HACER FUNCION EN SQL QUE VALIDE LAS FECHAS AL MOMENTO DE INSERTAR ( NO PUEDO INSERTAR FECHAS DEL PASADO )
 
 
