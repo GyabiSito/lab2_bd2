@@ -99,7 +99,7 @@ int getTotalReservasParking(int id_parque, int id_parking, int mes, int dia)
           AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local;
 
     if (sqlca.sqlcode != SQL_SUCCESS && sqlca.sqlcode != SQL_NO_DATA_FOUND) {
-        printf("Error al obtener total de reservas de parking: %d\n", sqlca.sqlcode);
+        printf(ERROR_OBTENER_TOTAL_RESERVAS_PARKING, sqlca.sqlcode);
         return ERROR_SIGNAL;
     }
     if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
@@ -148,14 +148,15 @@ VISITANTE getVisitante(const char *cedula)
 {
     EXEC SQL BEGIN DECLARE SECTION;
     int id_visitante;
-    char ci[MAX_CI_LENGTH];
-    char nombre[MAX_NOMBRE_LENGTH];
-    char cedula_local[MAX_CI_LENGTH];
+    char ci[MAX_CI_LENGTH + 1];
+    char nombre[MAX_NOMBRE_LENGTH + 1];
+    char cedula_local[MAX_CI_LENGTH + 1];
     EXEC SQL END DECLARE SECTION;
 
     VISITANTE visitante;
 
     strncpy(cedula_local, cedula, sizeof(cedula_local));
+    cedula_local[sizeof(cedula_local) - 1] = '\0'; // Asegurar terminación nula
 
     EXEC SQL SELECT id_visitante, ci, nombre INTO :id_visitante, :ci, :nombre FROM visitantes WHERE ci = :cedula_local;
 
@@ -191,7 +192,6 @@ PARQUE getParque(int id){
 
     PARQUE parque;
 
-    printf("Buscando el parque con ID %d\n", id);
     EXEC SQL SELECT id_parque, id_ubicacion, nombre, capacidad_maxima_diaria 
     INTO :id_parque, :id_ubicacion, :nombre, :capacidad_maxima_diaria 
     FROM parques p
@@ -272,7 +272,32 @@ PARKING getParking(int id_parque){
 //     printf("Total de pases encontrados: %d\n", total_pases);
 //     return total_pases;
 // }
+bool existePaseVisitante(int id_visitante, int mes, int dia) {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_visitante_local = id_visitante;
+    int mes_local = mes;
+    int dia_local = dia;
+    bool existe = false;
+    EXEC SQL END DECLARE SECTION;
+    
 
+    EXEC SQL SELECT EXISTS 
+    (    
+        SELECT 1
+        FROM pases_parques pp
+        JOIN pases p ON pp.id_pase = p.id_pase
+        WHERE p.id_visitante = :id_visitante_local
+        AND EXTRACT(MONTH FROM pp.fecha_acceso) = :mes_local
+        AND EXTRACT(DAY FROM pp.fecha_acceso) = :dia_local
+    ) 
+    INTO :existe;
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        return false; // señal de error
+    }
+
+    return existe;
+}
 void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia) {
     EXEC SQL BEGIN DECLARE SECTION;
     int id_visitante_local = id_visitante;
@@ -295,25 +320,27 @@ void imprimirPasesVisitantePorFecha(int id_visitante, int mes, int dia) {
 
     EXEC SQL OPEN cur_pase_fecha;
 
-    printf("buscando pases del visitante (ID: %d) para el día %d/%d...\n", id_visitante, dia, mes);
-    printf("\nPases del visitante (ID: %d) para el día %d/%d:\n", id_visitante, dia, mes);
-    printf("--------------------------------------------------\n");
-
+    printf(CHAR_BUSCANDO_PASES, id_visitante, dia, mes);
+    printf(CHAR_PASES_VISITANTE, id_visitante, dia, mes);
+    printf(CHAR_IMPRIMIR_LINEA);
+    
     int encontrados = 0;
-
+    
     while (1) {
         EXEC SQL FETCH cur_pase_fecha INTO :id_pase, :fecha_acceso, :nombre_parque;
         if (sqlca.sqlcode != SQL_SUCCESS) break;
-
-        printf("Pase ID: %d | Fecha: %s | Parque: %s\n",id_pase,fecha_acceso,nombre_parque);
+        
+        printf(CHAR_IMPRIMIR_PASE,id_pase,fecha_acceso,nombre_parque);
         encontrados++;
     }
-
+    
     if (encontrados == 0) {
-        printf("No se encontraron pases para esa fecha.\n");
+        printf(NO_PASES_FECHA);
     }
-
+    
+    printf(CHAR_IMPRIMIR_LINEA);
     EXEC SQL CLOSE cur_pase_fecha;
+    return;
 }
 
 long getMontoTotal(int anio, int mes){
@@ -328,7 +355,6 @@ long getMontoTotal(int anio, int mes){
         WHERE EXTRACT(YEAR FROM c.fecha_compra) = :anio_local
         AND EXTRACT(MONTH FROM c.fecha_compra) = :mes_local;
 
-    printf("Buscando total en el año %d, y el mes %d \n", anio_local, mes_local);
 
     return total;
  
@@ -419,15 +445,18 @@ int getMaxIdVisitante() {
 }
 VISITANTE crearVisitante(const char *cedula, const char *nombre) {
     EXEC SQL BEGIN DECLARE SECTION;
-    int id_visitante = getMaxIdVisitante() + 1; // Incrementar el ID máximo
-    char ci[MAX_CI_LENGTH];
-    char nombre_local[MAX_NOMBRE_LENGTH];
+    int id_visitante = getMaxIdVisitante() + 1;
+    char ci[MAX_CI_LENGTH +1];
+    char nombre_local[MAX_NOMBRE_LENGTH +1];
     EXEC SQL END DECLARE SECTION;
 
     VISITANTE visitante;
 
-    strncpy(ci, cedula, sizeof(ci));
-    strncpy(nombre_local, nombre, sizeof(nombre_local));
+    strncpy(ci, cedula, sizeof(ci) - 1);
+    ci[sizeof(ci) - 1] = '\0';
+
+    strncpy(nombre_local, nombre, sizeof(nombre_local) - 1);
+    nombre_local[sizeof(nombre_local) - 1] = '\0';
 
     EXEC SQL INSERT INTO visitantes (id_visitante, ci, nombre)
         VALUES (:id_visitante, :ci, :nombre_local);
@@ -435,49 +464,74 @@ VISITANTE crearVisitante(const char *cedula, const char *nombre) {
     if (sqlca.sqlcode != SQL_SUCCESS) {
         printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
         EXEC SQL ROLLBACK;
-        visitante.id_visitante = ERROR_SIGNAL; // señal de error
+        visitante.id_visitante = ERROR_SIGNAL;
         return visitante;
     }
 
     visitante.id_visitante = id_visitante;
-    strncpy(ci, cedula, sizeof(ci) - 1);
-    ci[sizeof(ci) - 1] = '\0';
 
-    strncpy(nombre_local, nombre, sizeof(nombre_local) - 1);
-    nombre_local[sizeof(nombre_local) - 1] = '\0';
+
+    strncpy(visitante.ci, cedula, sizeof(visitante.ci) - 1);
+    visitante.ci[sizeof(visitante.ci) - 1] = '\0';
+
+    strncpy(visitante.nombre, nombre, sizeof(visitante.nombre) - 1);
+    visitante.nombre[sizeof(visitante.nombre) - 1] = '\0';
 
     EXEC SQL COMMIT;
     return visitante;
 }
 
-long getPrecio(int id_parque, int mes, int dia) {
+
+PRECIO getPrecio(int id_parque, const char* fecha_acceso) {
     EXEC SQL BEGIN DECLARE SECTION;
-    long precio = 0;
     int id_parque_local = id_parque;
-    int mes_local = mes;
-    int dia_local = dia;
+    char fecha_acceso_local[MAX_FECHA_LENGTH];
+    long precio = 0;
+    int id_precio = 0;
+    char fecha_inicio[MAX_FECHA_LENGTH];
+    char fecha_fin[MAX_FECHA_LENGTH];
     EXEC SQL END DECLARE SECTION;
 
-    // Buscar el precio válido para la fecha dada (fecha_acceso debe estar entre fecha_inicio y fecha_fin)
-    EXEC SQL SELECT precio INTO :precio FROM precios 
-        WHERE id_parque = :id_parque_local
-        AND EXTRACT(MONTH FROM fecha_inicio) <= :mes_local
-        AND EXTRACT(MONTH FROM fecha_fin) >= :mes_local
-        AND EXTRACT(DAY FROM fecha_inicio) <= :dia_local
-        AND EXTRACT(DAY FROM fecha_fin) >= :dia_local;
+    PRECIO precio_local;
 
-    if (sqlca.sqlcode != SQL_SUCCESS) {
+    // Copiar la fecha al buffer local
+    strncpy(fecha_acceso_local, fecha_acceso, sizeof(fecha_acceso_local) - 1);
+    fecha_acceso_local[sizeof(fecha_acceso_local) - 1] = '\0';
+
+    EXEC SQL SELECT id_precio, precio, fecha_inicio, fecha_fin
+        INTO :id_precio, :precio, :fecha_inicio, :fecha_fin
+        FROM precios p
+        WHERE p.id_parque = :id_parque_local
+        AND :fecha_acceso_local BETWEEN p.fecha_inicio AND p.fecha_fin;
+
+    if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
+        printf(ERROR_PRECIO_NO_ENCONTRADO, id_parque_local, fecha_acceso_local);
+        precio_local.id_precio = ERROR_SIGNAL;
+        return precio_local;
+    } else if (sqlca.sqlcode != SQL_SUCCESS) {
         printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
-        return ERROR_SIGNAL; // señal de error
+        precio_local.id_precio = ERROR_SIGNAL;
+        return precio_local;
     }
 
-    return precio;
+    // Asignar los datos recuperados a la estructura
+    precio_local.id_precio = id_precio;
+    precio_local.id_parque = id_parque_local;
+    precio_local.precio = precio;
+    strncpy(precio_local.fecha_inicio, fecha_inicio, sizeof(precio_local.fecha_inicio) - 1);
+    precio_local.fecha_inicio[sizeof(precio_local.fecha_inicio) - 1] = '\0';
+    strncpy(precio_local.fecha_fin, fecha_fin, sizeof(precio_local.fecha_fin) - 1);
+    precio_local.fecha_fin[sizeof(precio_local.fecha_fin) - 1] = '\0';
+
+    return precio_local;
 }
-bool getCliente(const char* ci_cliente){
+
+bool existeCliente(const char* ci_cliente){
     EXEC SQL BEGIN DECLARE SECTION;
-    bool ci_cliente_local=ci_cliente;
+    char ci_cliente_local[MAX_CI_LENGTH];
     bool ok=false;
     EXEC SQL END DECLARE SECTION;
+    strncpy(ci_cliente_local, ci_cliente, sizeof(ci_cliente_local));
     
     // Buscar el precio válido para la fecha dada (fecha_acceso debe estar entre fecha_inicio y fecha_fin)
     EXEC SQL SELECT EXISTS(SELECT 1 FROM clientes c WHERE c.ci = :ci_cliente_local) INTO :ok; 
@@ -490,45 +544,267 @@ bool getCliente(const char* ci_cliente){
     return ok;
 
 }
+CLIENTE getCliente(const char *ci_cliente) {
+    CLIENTE cliente;
+    memset(&cliente, 0, sizeof(cliente));
 
-
-int esCorreoValido(const char *correo) {
-    return (strchr(correo, '@') && strchr(correo, '.'));
-}
-
-
-void registrarCliente(const char* id_cliente) {
-    clearConsole();
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_cliente;
+    char email[MAX_LENGTH + 1];
     char nombre[MAX_NOMBRE_LENGTH + 1];
-    char correo[MAX_LENGTH + 1];
-    bool nombreValido = false;
+    char ci[MAX_CI_LENGTH + 1];
+    EXEC SQL END DECLARE SECTION;
 
-    do {
-        printf(CHAR_INGRESE_NOMBRE_CLIENTE, MAX_NOMBRE_LENGTH);
-        fgets(nombre, sizeof(nombre), stdin);
-        nombre[strcspn(nombre, "\n")] = '\0';
-    
-        nombreValido = esNombreValido(nombre); // Solo una vez por iteración
-    
-    } while (!nombreValido);
-    
-    // Pedir correo
-    do {
-        printf(CHAR_INGRESE_CORREO_CLIENTE);
-        fgets(correo, sizeof(correo), stdin);
-        correo[strcspn(correo, "\n")] = '\0';
 
-        if (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo)) {
-            printf(CHAR_CORREO_INVALIDO);
-        }
-    } while (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo));
+    strncpy(ci, ci_cliente, MAX_CI_LENGTH);
+    ci[MAX_CI_LENGTH] = '\0';
 
-    printf(CHAR_CLIENTE_REGISTRADO, id_cliente, nombre, correo);
+    EXEC SQL SELECT id_cliente, email, nombre INTO :id_cliente, :email, :nombre
+             FROM clientes WHERE ci = :ci;
+
+    if (sqlca.sqlcode == SQL_NO_DATA_FOUND) {
+        cliente.id_cliente = ERROR_SIGNAL;
+        return cliente;
+    } else if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_DATOS, sqlca.sqlcode);
+        cliente.id_cliente = ERROR_SIGNAL;
+        return cliente;
+    }
+
+    strncpy(cliente.email, email, MAX_LENGTH);
+    cliente.email[MAX_LENGTH] = '\0';
+
+    strncpy(cliente.nombre, nombre, MAX_NOMBRE_LENGTH);
+    cliente.nombre[MAX_NOMBRE_LENGTH] = '\0';
+
+    strncpy(cliente.ci, ci, MAX_CI_LENGTH);
+    cliente.ci[MAX_CI_LENGTH] = '\0';
+    
+    cliente.id_cliente = id_cliente;
+
+    return cliente;
+}
+
+
+int getMaxIdCompra() {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int max_id = 0;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT MAX(id_compra) INTO :max_id FROM compras;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_MAX_ID, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return max_id;
 }
 
 
 
-void insertCompra(COMPRA compra){
-    return;
+COMPRA insertarCompra(COMPRA compra){
+    int id_compra = getMaxIdCompra() + 1; // Incrementar el ID máximo
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_compra_local = id_compra;
+    int id_cliente_local = compra.id_cliente;
+    char fecha_compra[MAX_FECHA_LENGTH];
+    char hora_compra[MAX_HORA_LENGTH];
+    long monto_total_local = compra.monto_total;
+    char debito_credito[MAX_BOOL_LENGTH + 1];
+    char numero_tarjeta[MAX_N_TARJETA_LENGTH_BUFFER];
+    char fecha_vencimiento[MAX_FECHA_VENCIMIENTO_LENGTH_BUFFER];
+    char cvv[MAX_CVV_LENGTH];
+    int cant_pases = compra.cant_pases;
+    int cant_vehiculos = compra.cant_vehiculos;
+    EXEC SQL END DECLARE SECTION;
+
+    strncpy(fecha_compra, compra.fecha_compra, sizeof(fecha_compra));
+    strncpy(hora_compra, compra.hora_compra, sizeof(hora_compra));
+    strncpy(debito_credito, compra.debito_credito, sizeof(debito_credito));
+    strncpy(numero_tarjeta, compra.numero_tarjeta, sizeof(numero_tarjeta));
+    snprintf(fecha_vencimiento, sizeof(fecha_vencimiento), "%s", compra.fecha_vencimiento);
+    strncpy(cvv, compra.cvv, sizeof(cvv));
+
+
+    
+    EXEC SQL INSERT INTO compras (id_compra, id_cliente, fecha_compra, hora_compra, monto_total,
+                                  debito_credito, numero_tarjeta, fecha_vencimiento, cvv,
+                                  cant_pases, cant_vehiculos)
+             VALUES (:id_compra_local, :id_cliente_local, :fecha_compra, :hora_compra,
+                     :monto_total_local, :debito_credito, :numero_tarjeta,
+                     :fecha_vencimiento, :cvv, :cant_pases, :cant_vehiculos);
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_INSERTAR_COMPRA, sqlca.sqlcode);
+        printf("sqlca.sqlcode: %d\n", sqlca.sqlcode);
+        printf("sqlca.sqlerrm: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        
+        EXEC SQL ROLLBACK; // Deshacer la transacción en caso de error
+        printf("DEBUG -> id_compra: %d, id_cliente: %d, fecha_compra: %s, hora_compra: %s, monto_total: %ld, debito_credito: %s, numero_tarjeta: %s, fecha_vencimiento: %s, cvv: %s, cant_pases: %d, cant_vehiculos: %d\n",
+            id_compra_local, id_cliente_local, fecha_compra, hora_compra, monto_total_local,
+            debito_credito, numero_tarjeta, fecha_vencimiento, cvv, cant_pases, cant_vehiculos);
+        compra.id_compra = ERROR_SIGNAL; // señal de error
+        return compra; // señal de error
+    }
+
+    EXEC SQL COMMIT;
+    compra.id_compra = id_compra; // Asignar el ID de compra generado
+    return compra; // Retornar la compra con el ID asignado
 }
 
+CLIENTE insertarCliente(CLIENTE cliente) {
+    CLIENTE nuevo_cliente;
+    int id_cliente = getMaxIdCliente() + 1; // Incrementar el ID máximo
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_cliente_local = id_cliente;
+    char ci[MAX_CI_LENGTH];
+    char nombre_local[MAX_NOMBRE_LENGTH];
+    char correo_local[MAX_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+
+
+    strncpy(ci, cliente.ci, sizeof(ci));
+    strncpy(nombre_local, cliente.nombre, sizeof(nombre_local));
+    strncpy(correo_local, cliente.email, sizeof(correo_local));
+
+
+
+    EXEC SQL INSERT INTO clientes (id_cliente, email,nombre,ci) VALUES (:id_cliente_local, :correo_local, :nombre_local, :ci);
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_INSERTAR_CLIENTE, sqlca.sqlcode);
+        printf("sqlca.sqlcode: %d, sqlca.sqlerrm: %.*s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        nuevo_cliente.id_cliente = ERROR_SIGNAL; // señal de error
+        EXEC SQL ROLLBACK;
+        return nuevo_cliente; // señal de error
+    }
+
+    EXEC SQL COMMIT;
+    nuevo_cliente.id_cliente = id_cliente; // Asignar el ID de cliente generado
+    strncpy(nuevo_cliente.ci, ci, sizeof(nuevo_cliente.ci) - 1);
+    nuevo_cliente.ci[sizeof(nuevo_cliente.ci) - 1] = '\0';
+
+    strncpy(nuevo_cliente.nombre, nombre_local, sizeof(nuevo_cliente.nombre) - 1);
+    nuevo_cliente.nombre[sizeof(nuevo_cliente.nombre) - 1] = '\0';
+
+    strncpy(nuevo_cliente.email, correo_local, sizeof(nuevo_cliente.email) - 1);
+    nuevo_cliente.email[sizeof(nuevo_cliente.email) - 1] = '\0';
+
+    return nuevo_cliente; // Retornar el cliente con el ID asignado
+}
+
+int getMaxIdCliente() {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int max_id = 0;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT MAX(id_cliente) INTO :max_id FROM clientes;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_MAX_ID, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return max_id;  
+}
+
+int getMaxIdPase(){
+    EXEC SQL BEGIN DECLARE SECTION;
+    int max_id = 0;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT MAX(id_pase) INTO :max_id FROM pases;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_MAX_ID, sqlca.sqlcode);
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return max_id;
+}
+
+
+//Ya se supone que le estoy pasando un PASE con el ID de pase generado
+PASE insertarPase(PASE pase){
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_pase_local = pase.id_pase;
+    int id_visitante_local = pase.id_visitante;
+    int id_compra_local = pase.id_compra;
+    char codigo_qr_local[MAX_LENGTH]; 
+    long precio_total_actual = pase.precio_total;
+    EXEC SQL END DECLARE SECTION;
+
+    strncpy(codigo_qr_local, pase.codigo_qr, sizeof(codigo_qr_local));
+
+
+    EXEC SQL INSERT INTO pases (id_pase, id_visitante, id_compra, codigo_qr, precio_total)
+        VALUES (:id_pase_local, :id_visitante_local, :id_compra_local, :codigo_qr_local, :precio_total_actual);
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        EXEC SQL ROLLBACK;
+        printf(ERROR_INSERTAR_PASE, sqlca.sqlcode);
+        pase.id_pase = ERROR_SIGNAL; // señal de error
+        printf("sqlca.sqlcode: %d, sqlca.sqlerrm: %.*s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        printf("sqlca.sqlerrm.sqlerrmc: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        printf("DEBUG -> id_pase: %d, id_visitante: %d, id_compra: %d, QR: %s, precio: %ld\n",
+            id_pase_local, id_visitante_local, id_compra_local, codigo_qr_local, precio_total_actual);
+            printf("SQL : INSERT INTO pases (id_pase, id_visitante, id_compra, codigo_qr, precio_total) VALUES (%d, %d, %d, '%s', %ld)\n",
+            id_pase_local, id_visitante_local, id_compra_local, codigo_qr_local, precio_total_actual);
+        printf("sqlca.sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
+        printf("sqlca.sqlerrm.sqlerrmc: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        printf("sqlca.sqlerrm.sqlerrmc: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        return pase; // señal de error
+    }
+
+    EXEC SQL COMMIT; // Confirmar la transacción
+    return pase; // Retornar el pase con el ID asignado
+}
+
+ 
+int getMaxIdPaseParque() {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int max_id = 0;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT MAX(id_pase_parque) INTO :max_id FROM pases_parques;
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf(ERROR_OBTENER_MAX_ID, sqlca.sqlcode);
+        printf("sqlca.sqlcode: %d, sqlca.sqlerrm: %.*s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        EXEC SQL ROLLBACK; // Deshacer la transacción en caso de error
+        return ERROR_SIGNAL; // señal de error
+    }
+
+    return max_id;
+}
+PASE_PARQUE insertarPaseParque(PASE_PARQUE pase_parque) {
+    EXEC SQL BEGIN DECLARE SECTION;
+    int id_pase_parque_local = pase_parque.id_pase_parque;
+    int id_parque_local = pase_parque.id_parque;
+    int id_pase_local = pase_parque.id_pase;
+    int id_precio_local = pase_parque.id_precio;
+    bool incluye_parking_local = pase_parque.incluye_parking;
+    char fecha_acceso_local[MAX_FECHA_LENGTH];
+    EXEC SQL END DECLARE SECTION;
+
+    strncpy(fecha_acceso_local, pase_parque.fecha_accesso, sizeof(fecha_acceso_local));
+
+    EXEC SQL INSERT INTO pases_parques (id_pase_parque, id_parque, id_pase, id_precio, incluye_parking, fecha_acceso)
+        VALUES (:id_pase_parque_local, :id_parque_local, :id_pase_local, :id_precio_local, :incluye_parking_local, :fecha_acceso_local);
+
+    if (sqlca.sqlcode != SQL_SUCCESS) {
+        printf("Error sql %ld\n", sqlca.sqlcode);
+        EXEC SQL ROLLBACK;
+        pase_parque.id_pase_parque = ERROR_SIGNAL; // señal de error
+        printf("sqlca.sqlcode: %d, sqlca.sqlerrm: %.*s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        printf("DEBUG -> id_pase_parque: %d, id_parque: %d, id_pase: %d, incluye_parking: %d, fecha_acceso: %s\n",
+            id_pase_parque_local, id_parque_local, id_pase_local, incluye_parking_local, fecha_acceso_local);
+        printf("sqlca.sqlerrm.sqlerrmc: %.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+        return pase_parque; // señal de error
+    }
+
+    EXEC SQL COMMIT; // Confirmar la transacción
+    
+    return pase_parque; // Retornar el pase parque con el ID asignado
+}

@@ -11,4 +11,6 @@ void mostrarMenu();
 void realizarVenta();
 void validarEntradas();
 void totalRecaudadoFecha();
+void registrarCliente();
+void limpiarBuffer();
 #endif // MAIN_H

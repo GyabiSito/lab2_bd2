@@ -53,6 +53,7 @@
         "streambuf": "c",
         "text_encoding": "c",
         "typeinfo": "c",
-        "variant": "c"
+        "variant": "c",
+        "utils.h": "c"
     }
 }

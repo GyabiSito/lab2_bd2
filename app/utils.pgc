@@ -67,48 +67,42 @@ bool esAnioValido(int anio){
     }
     return true;
 }
-char* esNumeroValido(char *input) {
-    // Eliminar salto de línea si existe
-    input[strcspn(input, "\n")] = '\0';
-
+bool esNumeroValido(const char *input) {
     // Verificar que no esté vacío
-    if (strlen(input) == 0) {
+    if (input == NULL || strlen(input) == 0) {
         printf("ERROR: Entrada vacía.\n");
-        return NULL;
+        return false;
     }
 
     // Verificar que todos los caracteres sean dígitos
     for (size_t i = 0; i < strlen(input); i++) {
         if (!isdigit((unsigned char)input[i])) {
             printf("ERROR: Solo se permiten dígitos.\n");
-            return NULL;
+            return false;
         }
     }
 
-    return input;
+    return true;
 }
 
-char* esNumeroValidoTarjeta(char *input) {
-    // No hace falta cortar \n si usás scanf("%s")
-    size_t len = strlen(input);
-
-    for (size_t i = 0; i < len; i++) {
+bool esNumeroValidoTarjeta(const char *input) {
+    for (size_t i = 0; i < strlen(input); i++) {
         if (!isdigit((unsigned char)input[i])) {
-            printf("ERROR: Solo se permiten dígitos.\n");
-            return NULL;
+            return false;
         }
     }
-    return input;
+    return true;
 }
+
 
 bool esNombreValido(const char *nombre) {
     if (strlen(nombre) == 0 || strlen(nombre) > MAX_NOMBRE_LENGTH) {
-        printf(ERROR_NOMBRE_INVALIDO);
+        // printf(ERROR_NOMBRE_INVALIDO);
         return false;
     }
     for (int i = 0; i < strlen(nombre); i++) {
         if (!isalpha((unsigned char)nombre[i]) && nombre[i] != ' ') {
-            printf(ERROR_NOMBRE_INVALIDO);
+            // printf(ERROR_NOMBRE_INVALIDO);
             return false;
         }
     }
@@ -132,4 +126,75 @@ void obtener_fecha_hora_actual(char *fecha, char *fecha_hora) {
 
     // Formato "YYYY-MM-DD HH:MM:SS"
     strftime(fecha_hora, 20, "%Y-%m-%d %H:%M:%S", actual);
+}
+
+bool esCorreoValido(const char *correo) {
+    if (correo == NULL || strlen(correo) < 5) return false;
+
+    const char *arroba = strchr(correo, '@');
+    if (!arroba) return false;
+
+    // Solo una arroba
+    if (strchr(arroba + 1, '@')) return false;
+
+    // Texto antes de @
+    if (arroba == correo) return false;
+
+    // Texto después de @
+    const char *dominio = arroba + 1;
+    if (strlen(dominio) < 3) return false;
+
+    // Debe haber un punto después de @
+    const char *punto = strchr(dominio, '.');
+    if (!punto || punto == dominio || *(punto + 1) == '\0') return false;
+
+    // No debe contener espacios
+    for (int i = 0; correo[i]; i++) {
+        if (isspace((unsigned char)correo[i])) return false;
+    }
+
+    return true;
+}
+
+bool esTarjetaVencida(const char *fecha_vencimiento) {
+    if (strlen(fecha_vencimiento) != 5) return true; // Si formato inválido, consideramos vencida
+
+    if (fecha_vencimiento[2] != SEPARADOR_TARJETA) return true;
+
+    // Extraer mes y año (dos dígitos)
+    int mes = atoi((char[]){fecha_vencimiento[0], fecha_vencimiento[1], '\0'});
+    int anio2dig = atoi((char[]){fecha_vencimiento[3], fecha_vencimiento[4], '\0'});
+
+    if (!esMesValido(mes)) return true;
+
+    // Obtener fecha actual
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    int anio_actual = tm_info->tm_year + 1900; // Ej: 2025
+    int mes_actual = tm_info->tm_mon + 1;      // Mes entre 1 y 12
+
+    // Convertir año de 2 dígitos a año completo (asumimos 2000+)
+    int anio = 2000 + anio2dig;
+
+    // Comparar fecha vencimiento con fecha actual
+    if (anio < anio_actual) {
+        return true; // Vencida
+    } else if (anio == anio_actual && mes < mes_actual) {
+        return true; // Vencida
+    }
+
+    return false; // No vencida
+}
+
+
+int getMesActual(){
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    return tm_info->tm_mon + 1; // Mes entre 1 y 12
+}
+
+int getDiaActual(){
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    return tm_info->tm_mday; // Día del mes
 }

@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     int id_precio;
     int id_parque;
-    float precio;
+    long precio;
     char fecha_inicio[MAX_FECHA_LENGTH]; // YYYY-MM-DD
     char fecha_fin[MAX_FECHA_LENGTH];
 } PRECIO;
@@ -59,24 +59,26 @@ typedef struct {
 } ACCEDE;
 
 typedef struct {
-    int id_pase;
-    int id_visitante;
-    int id_compra;
-    char codigo_qr[MAX_LENGTH];
-    float precio_total;
-} PASE;
-
-typedef struct {
     int id_pase_parque;
     int id_parque;
     int id_pase;
     bool incluye_parking; // 0 = no, 1 = sí
+    int id_precio;
     char fecha_accesso[MAX_FECHA_LENGTH];
-} PaseParque;
+} PASE_PARQUE;
+
+typedef struct {
+    int id_pase;
+    int id_visitante;
+    int id_compra;
+    char codigo_qr[MAX_LENGTH];
+    long precio_total;
+    PASE_PARQUE pase_parque;
+} PASE;
 
 typedef struct {
     int id_visitante;
-    char ci[MAX_CI_LENGTH];
+    char ci[MAX_CI_LENGTH + 1];
     char nombre[MAX_NOMBRE_LENGTH];
 } VISITANTE;
 
@@ -85,10 +87,10 @@ typedef struct {
     int id_cliente;
     char fecha_compra[MAX_FECHA_LENGTH];
     char hora_compra[MAX_HORA_LENGTH];
-    float monto_total;
-    char debito_credito[MAX_BOOL_LENGTH]; //D para débito, C para crédito
-    char numero_tarjeta[MAX_N_TARJETA_LENGTH];
-    char fecha_vencimiento[MAX_FECHA_VENCIMIENTO_LENGTH];
+    long monto_total;
+    char debito_credito[MAX_BOOL_LENGTH + 1]; //D para débito, C para crédito
+    char numero_tarjeta[MAX_N_TARJETA_LENGTH_BUFFER];
+    char fecha_vencimiento[MAX_FECHA_VENCIMIENTO_LENGTH_BUFFER];
     char cvv[MAX_CVV_LENGTH];
     int cant_pases;
     int cant_vehiculos;
@@ -96,9 +98,8 @@ typedef struct {
 
 typedef struct {
     int id_cliente;
-    char email[MAX_LENGTH];
-    char ci[MAX_CI_LENGTH];
-    char nombre[MAX_NOMBRE_LENGTH];
+    char ci[MAX_CI_LENGTH + 1];
+    char nombre[MAX_NOMBRE_LENGTH + 1];
+    char email[MAX_LENGTH + 1];
 } CLIENTE;
-
 #endif

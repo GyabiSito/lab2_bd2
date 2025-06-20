@@ -27,7 +27,7 @@ int main() {
         int result = scanf("%d", &opcion);
         while (getchar() != '\n'); // limpia el buffer
 
-        if (result != 1 || opcion < 0 || opcion > 3) {
+        if (result != 1 || opcion < 0 || opcion > 4) {
             clearConsole();
             printf(CHAR_OPCION_INVALIDA);
             continue;  // vuelve a mostrar el menú
@@ -43,8 +43,10 @@ int main() {
             case 3:
                 totalRecaudadoFecha();
                 break;
+            case 4:
+                registrarCliente();
             case 0:
-                printf("Saliendo del programa...\n");
+                printf(CHAR_SALIENDO);
                 break;
         }
 
@@ -63,6 +65,7 @@ void mostrarMenu()
     printf(MENU_REALIZAR_VENTA);
     printf(MENU_VALIDAR_ENTRADAS);
     printf(MENU_TOTAL_RECAUDADO_MES_ANIO);
+    printf(MENU_REGISTRAR_CLIENTE);
     printf(MENU_SALIR);
 }
 /*
@@ -122,13 +125,16 @@ void realizarVenta() {
     } while (!esCedulaValida(ci_cliente));
 
     
-    if(!getCliente(ci_cliente)){
+    if(!existeCliente(ci_cliente)){
         clearConsole();
         printf(CHAR_CLIENTE_INEXISTENTE);
-        registrarCliente(ci_cliente);
         return;
     }
-    printf("El cliente existe %s",ci_cliente);
+
+    CLIENTE cliente= getCliente(ci_cliente);
+    clearConsole();
+    printf(CHAR_CLIENTE_ENCONTRADO, cliente.nombre, cliente.ci);
+
     int id_parque;
     int cantidad_vehiculos;
     printf(CHAR_IMPRIMIR_ASTERISCO);
@@ -179,6 +185,7 @@ void realizarVenta() {
     int mes;
     do {
         printf(CHAR_INGRESE_MES);
+        int mesActual = getMesActual();
         imprimirMeses();
         scanf("%d", &mes);
         while (getchar() != '\n'); // limpiar buffer
@@ -187,11 +194,19 @@ void realizarVenta() {
             clearConsole();
             printf(ERROR_MES_INVALIDO, MIN_MES, MAX_MES);
         }
-    } while (!esMesValido(mes));
+
+        //Preguntar si el mes es menor al mes actual
+        if(mes < getMesActual()) {
+            clearConsole();
+            printf(ERROR_MES_ACTUAL, mes, getMesActual());
+        }
+    } while (!esMesValido(mes) || mes < getMesActual());
     
     clearConsole();    
     //En la funcion obtenerDiasDelMes, se ponen los dias que tienen los meses
     int totalDiasMes = obtenerDiasDelMes(mes, ANIO_2025);
+
+
     int dia;
     
     do {
@@ -203,46 +218,83 @@ void realizarVenta() {
             clearConsole();
             printf(ERROR_DIA_INVALIDO, totalDiasMes, mes);
         }
-    } while (!esDiaValido(dia, mes, ANIO_2025));
+        if(dia < getDiaActual() && mes == getMesActual()) {
+            clearConsole();
+            printf(ERROR_DIA_ACTUAL, dia, getDiaActual());
+        }
+    } while (!esDiaValido(dia, mes, ANIO_2025) || (dia < getDiaActual() && mes == getMesActual()));
     
     clearConsole();
 
+    char fecha_acceso[MAX_FECHA_LENGTH];
+    snprintf(fecha_acceso, sizeof(fecha_acceso), "%04d-%02d-%02d", ANIO_2025, mes, dia);
+
+    PRECIO precio = getPrecio(parqueSeleccionado.id_parque, fecha_acceso);
+    if(precio.id_precio == ERROR_SIGNAL) {
+        clearConsole();
+        printf(ERROR_PRECIO_NO_ENCONTRADO, parqueSeleccionado.id_parque, mes, dia);
+        return;
+    }
+
+    //Imprimir precio
+
+    //***************************VALIDAR CAPACIDAD PARQUE********************************
+
+
     int entradasReservadas = getTotalReservasParque(parqueSeleccionado.id_parque, mes, dia);
+    char buffer[100];
     int cantidad_entradas;
-    int resultado;
-    
+    int es_valido;
+
     do {
         printf(TOTAL_ENTRADAS_RESERVADAS, parqueSeleccionado.id_parque, mes, dia, entradasReservadas);
         printf(CAPACIDAD_MAXIMA_PARQUE, parqueSeleccionado.id_parque, parqueSeleccionado.capacidad_maxima_diaria);
         printf(CANTIDAD_DISPONIBLE, parqueSeleccionado.capacidad_maxima_diaria - entradasReservadas);
         printf(CHAR_INGRESE_CANTIDAD_ENTRADAS);
-    
-        resultado = scanf("%d", &cantidad_entradas);
-    
-        // Limpiar buffer para evitar problemas en la siguiente lectura
-        while (getchar() != '\n');
-    
-        if (resultado != 1) {
+
+        if (!fgets(buffer, sizeof(buffer), stdin)) {
             clearConsole();
             printf(ERROR_CANTIDAD_INVALIDA);
-            cantidad_entradas = -1; // forzar repetición del ciclo
+            cantidad_entradas = -1;
             continue;
         }
-    
+
+        // Eliminar salto de línea si existe
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // Validar que toda la cadena sea dígitos
+        es_valido = 1;
+        for (int i = 0; buffer[i] != '\0'; i++) {
+            if (!isdigit((unsigned char)buffer[i])) {
+                es_valido = 0;
+                break;
+            }
+        }
+
+        if (!es_valido || strlen(buffer) == 0) {
+            clearConsole();
+            printf(ERROR_CANTIDAD_INVALIDA);
+            cantidad_entradas = -1;
+            continue;
+        }
+
+        cantidad_entradas = atoi(buffer);
+
         if (cantidad_entradas <= 0) {
             clearConsole();
             printf(ERROR_CANTIDAD_INVALIDA);
             continue;
         }
-    
+
         if (!validarCapacidadParque(parqueSeleccionado, mes, dia, cantidad_entradas)) {
             clearConsole();
             printf(CHAR_NO_ESPACIOS_PARQUE, parqueSeleccionado.id_parque, mes, dia);
-            cantidad_entradas = -1; // forzar repetición del ciclo
+            cantidad_entradas = -1;
         }
-    
+
     } while (cantidad_entradas <= 0);
-    
+
+        
 
     clearConsole();
 
@@ -262,24 +314,29 @@ void realizarVenta() {
      
     clearConsole();
     if (resultado_parking == SI_DESEA_PARKING && deseaParking == SI_DESEA_PARKING) {
+        int cantidad_vehiculos_valida = 0;
         int totalReservasParking = getTotalReservasParking(parqueSeleccionado.id_parque, parqueSeleccionado.id_ubicacion, mes, dia);
-    
         PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
-    
         int disponibles = parkingSeleccionado.limite_vehiculos - totalReservasParking;
     
-        printf(TOTAL_PARKING_RESERVADOS, parqueSeleccionado.id_parque, mes, dia, totalReservasParking);
-        printf(CAPACIDAD_MAXIMA_PARKING, parkingSeleccionado.id_parking, parkingSeleccionado.limite_vehiculos);
-        printf(CANTIDAD_DISPONIBLE, disponibles);
-        printf(CHAR_COSTO_ADICIONAL_PARKING, parkingSeleccionado.costo_adicional);
     
-        int cantidad_vehiculos_valida = 0;
-
+        
         do {
+
+            printf(TOTAL_PARKING_RESERVADOS, parqueSeleccionado.id_parque, mes, dia, totalReservasParking);
+            printf(CAPACIDAD_MAXIMA_PARKING, parkingSeleccionado.id_parking, parkingSeleccionado.limite_vehiculos);
+            printf(CANTIDAD_DISPONIBLE, disponibles);
+            printf(CHAR_COSTO_ADICIONAL_PARKING, parkingSeleccionado.costo_adicional);        
             printf(CHAR_INGRESE_CANTIDAD_VEHICULOS);
             int res = scanf("%d", &cantidad_vehiculos);
             while (getchar() != '\n'); // limpiar buffer
-            
+
+            if(cantidad_vehiculos > cantidad_entradas) {
+                clearConsole();
+                printf(ERROR_CANT_VEHICULOS_MAYOR_ENTRADAS, cantidad_entradas);
+                cantidad_vehiculos_valida = 0;
+                continue;
+            }
             if (res != 1 || cantidad_vehiculos < 0 || cantidad_vehiculos > disponibles) {
                 clearConsole();
                 printf(ERROR_CANT_VEHICULOS, disponibles);
@@ -308,7 +365,9 @@ void realizarVenta() {
     //Si el visitante exiuste (por la ci) se agrega a la lista, sino se da de alta
     for (int i = 0; i < cantidad_entradas; i++) {
         char cedula[MAX_CI_LENGTH];
-        printf(CHAR_INGRESE_CEDULA);
+        printf(CHAR_IMPRIMIR_ASTERISCO);
+        printf(CHAR_INGRESAR_VISITANTE, i + 1, cantidad_entradas);
+        printf(CHAR_INGRESE_CEDULA_VISITANTE);
         scanf("%s", cedula);
 
         if (!esCedulaValida(cedula)) {
@@ -318,11 +377,31 @@ void realizarVenta() {
             continue;
         }
 
+        // Verificar si el visitante ya existe
         VISITANTE visitante = getVisitante(cedula);
+
+
+        //luego, preguntar si ya tiene pases para esa misma fecha
+        if(existePaseVisitante(visitante.id_visitante, mes, dia)) {
+            clearConsole();
+            printf(CHAR_IMPRIMIR_ASTERISCO);
+            printf(CHAR_VISITANTE_EXISTE, visitante.nombre, visitante.ci);
+            printf(CHAR_PASES_EXISTENTES);
+            
+            imprimirPasesVisitantePorFecha(visitante.id_visitante, mes, dia);
+
+            printf(CHAR_IMPRIMIR_ASTERISCO);
+            
+            //repetir la iteración actual
+            i--;
+            continue;
+            
+        }
+
         if(visitante.id_visitante != ERROR_SIGNAL){
             clearConsole();
-            printf(CHAR_VISITANTE_ENCONTRADO, visitante.nombre, visitante.id_visitante);
-
+            printf(CHAR_VISITANTE_ENCONTRADO, visitante.nombre, visitante.ci);
+            
         }else{
             printf(VISITANTE_NO_ENCONTRADO);
             char nombre[MAX_NOMBRE_LENGTH];
@@ -353,6 +432,7 @@ void realizarVenta() {
             i--; // Repetir la iteración actual
             continue;
         }
+
         visitantes[i] = visitante;
     }
 
@@ -362,18 +442,19 @@ void realizarVenta() {
     //***************************PAGAR*************************************************
     // CALCULAR PRECIO TOTAL (entradas + parking)
     long precio_total = 0;
-    long precio_entrada=getPrecio(parqueSeleccionado.id_parque,mes,dia);
+
+    long precio_entrada = precio.precio;
     precio_total += precio_entrada * cantidad_entradas;
     if (cantidad_vehiculos > 0) {
         PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
         precio_total += parkingSeleccionado.costo_adicional * cantidad_vehiculos;
     }
-
+    long monto_final_iva = precio_total * IVA;
     // PREGUNTAR CONFIRMACIÓN
 
     int confirmar;
     int resultado_confirmar;
-
+    // clearConsole();
     do {
         // MOSTRAR RESUMEN
         printf(CHAR_IMPRIMIR_ASTERISCO);
@@ -381,9 +462,14 @@ void realizarVenta() {
         printf(CHAR_IMPRIMIR_ASTERISCO);
         printf(CHAR_MOSTRAR_PARQUE, parqueSeleccionado.nombre, parqueSeleccionado.id_parque);
         printf(CHAR_MOSTRAR_FECHA, dia, mes);
+        printf(CHAR_MOSTRAR_COSTO_PARQUE, precio_entrada);
         printf(CHAR_MOSTRAR_CANT_ENTRADAS, cantidad_entradas);
         if (cantidad_vehiculos > 0) {
+            printf(CHAR_IMPRIMIR_LINEA);
+            PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
+            printf(CHAR_COSTO_ADICIONAL_PARKING, parkingSeleccionado.costo_adicional);
             printf(CHAR_CANTIDAD_VEHICULOS, cantidad_vehiculos);
+            printf(CHAR_IMPRIMIR_LINEA);
         } else {
             printf(CHAR_NO_RESERVADO_PARKING);
         }
@@ -413,6 +499,8 @@ void realizarVenta() {
         return;
     }
     clearConsole();
+
+    COMPRA compra;
     // INGRESAR DATOS TARJETA
     char numero_tarjeta[MAX_N_TARJETA_LENGTH_BUFFER];
     char fecha_vencimiento[MAX_FECHA_VENCIMIENTO_LENGTH];
@@ -420,9 +508,16 @@ void realizarVenta() {
     char debito_credito[MAX_BOOL_LENGTH];
     // Solicitar número de tarjeta hasta que sea válido
     do {
-        printf(CHAR_INGRESE_DATOS_TARJETA);
         printf(CHAR_INGRESE_NUMERO_TARJETA);
-        scanf("%s", numero_tarjeta);
+        if (fgets(numero_tarjeta, sizeof(numero_tarjeta), stdin)) {
+            // Eliminar salto de línea final, si existe
+            numero_tarjeta[strcspn(numero_tarjeta, "\n")] = 0;
+        } else {
+            clearConsole();
+            printf(ERROR_TARJETA_INVALIDA);
+            continue;
+        }
+
         if (strlen(numero_tarjeta) != MAX_N_TARJETA_LENGTH || !esNumeroValidoTarjeta(numero_tarjeta)) {
             clearConsole();
             printf(ERROR_TARJETA_INVALIDA);
@@ -430,25 +525,55 @@ void realizarVenta() {
     } while (strlen(numero_tarjeta) != MAX_N_TARJETA_LENGTH || !esNumeroValidoTarjeta(numero_tarjeta));
     // Solicitar fecha de vencimiento hasta que sea válida
     clearConsole();
+    strcpy(compra.numero_tarjeta, numero_tarjeta);
     do {         
-
         printf(CHAR_INGRESE_F_VENC_TARJETA);
         scanf("%s", fecha_vencimiento);
-        if (strlen(fecha_vencimiento) != MAX_FECHA_VENCIMIENTO_LENGTH || fecha_vencimiento[2] != SEPARADOR_TARJETA) {
+        limpiarBuffer();  // Limpiar buffer después de scanf
+
+        bool formato_valido = strlen(fecha_vencimiento) == 5 && fecha_vencimiento[2] == SEPARADOR_TARJETA;
+        bool vencida = false;
+
+        if (formato_valido) {
+            vencida = esTarjetaVencida(fecha_vencimiento);
+        }
+
+        if (!formato_valido) {
             clearConsole();
             printf(ERROR_F_VENC_INVALIDA);
+        } else if (vencida) {
+            clearConsole();
+            printf(ERROR_F_VENC_VENCIDA);
         }
-    } while (strlen(fecha_vencimiento) != MAX_FECHA_VENCIMIENTO_LENGTH || fecha_vencimiento[2] != SEPARADOR_TARJETA);
+
+    } while (strlen(fecha_vencimiento) != 5 || fecha_vencimiento[2] != SEPARADOR_TARJETA || esTarjetaVencida(fecha_vencimiento));
+
+    // Convertir MM/AA a AAAA-MM-01
+    int mes_venc, anio_venc;
+    if (sscanf(fecha_vencimiento, "%2d/%2d", &mes_venc, &anio_venc) == 2) {
+        int anio_full = 2000 + anio_venc;
+        snprintf(compra.fecha_vencimiento, MAX_FECHA_VENCIMIENTO_LENGTH_BUFFER, "%04d-%02d-01", anio_full, mes_venc);
+    } else {
+        compra.fecha_vencimiento[0] = '\0'; // o manejar error
+    }
+
+
     clearConsole();
-    // Solicitar CVV hasta que sea válido
+
+    // Solicitar CVV
     do {
         printf(CHAR_INGRESE_CVV);
         scanf("%s", cvv);
+        limpiarBuffer();  // Limpiar buffer después de scanf
+
         if (strlen(cvv) != MAX_CVV_LENGTH || !esNumeroValido(cvv)) {
             clearConsole();
             printf(ERROR_CVV_INVALIDO);
         }
     } while (strlen(cvv) != MAX_CVV_LENGTH || !esNumeroValido(cvv));
+
+    strcpy(compra.cvv, cvv);
+
     clearConsole();
     // Solicitar tipo de tarjeta hasta que sea válido
     int deseaTarjeta;
@@ -464,10 +589,12 @@ void realizarVenta() {
             printf(ERROR_TIPO_TARJETA_INVALIDO); // Ej: "Entrada inválida. Ingrese 1 para Débito o 0 para Crédito."
         }
     } while (resultado_d_c != CHAR_DEBITO || (deseaTarjeta != CHAR_CREDITO && deseaTarjeta != CHAR_DEBITO));
+    strcpy(compra.debito_credito, deseaTarjeta == 1 ? CHAR_DEBITO_D : CHAR_CREDITO_C);
+    compra.debito_credito[1] = '\0';
         
-    // Insertar en base de datos
-    printf("Registrando venta...\n");
+    // ************************************************************************************Insertar en base de datos************************************************************************************
 
+    // ************************************************************************************COMPRA************************************************************************************
     //INSERTAR EN VISITANTES (hecho);
     // INSERTAR EN COMPRA
     // Variables para fecha
@@ -477,29 +604,121 @@ void realizarVenta() {
     // Obtener fecha y hora actuales
     obtener_fecha_hora_actual(fecha_actual, fecha_hora);
 
-    // Llenar struct COMPRA
-    COMPRA compra;
     compra.cant_pases = cantidad_entradas;
     compra.cant_vehiculos = cantidad_vehiculos;
-    strcpy(compra.cvv, cvv);
-    strcpy(compra.debito_credito, deseaTarjeta == 1 ? "D" : "C");
+    
+
+
     strcpy(compra.fecha_compra, fecha_actual);
     strcpy(compra.hora_compra, fecha_hora);
-    strcpy(compra.fecha_vencimiento, fecha_vencimiento); // Asegúrate que fecha_vencimiento es string
-    compra.id_cliente = 0;
-    compra.monto_total = precio_total;
-    strcpy(compra.numero_tarjeta, numero_tarjeta);
+    
+    compra.id_cliente = cliente.id_cliente;
+    compra.monto_total = monto_final_iva;
 
-    //FOREACH VISITANTE
-    // for(visitantes){
-    //     //  INSERTAR EN PASES
+
+    // Insertar compra en la base de datos
+    COMPRA compra_insertada = insertarCompra(compra);
+    if(compra_insertada.id_compra == ERROR_SIGNAL) {
+        clearConsole();
+        printf(ERROR_INSERTAR_COMPRA, compra.id_compra);
+        return;
+    }
+    // ************************************************************************************PASE************************************************************************************
+    // INSERTAR EN PASES
+    PASE pase[cantidad_entradas];
+    PASE pase_insertado[cantidad_entradas];
+    PASE_PARQUE pase_parque_insertado[cantidad_entradas];
+    for (int i = 0; i < cantidad_entradas; i++) {
+        pase[i].id_pase=getMaxIdPase() + 1;
+        pase[i].id_visitante = visitantes[i].id_visitante;
+        pase[i].id_compra = compra_insertada.id_compra;
+        // Generar un código QR único para el pase
+        time_t now = time(NULL);
+        snprintf(pase[i].codigo_qr, sizeof(pase[i].codigo_qr), "QR_%d_%d_%d_%ld", pase[i].id_visitante, pase[i].id_compra, pase[i].id_pase, now);
+        pase[i].precio_total = precio_entrada; // El precio total del pase es el precio de la entrada
+        precio_total += pase[i].precio_total;
+        pase_insertado[i] = insertarPase(pase[i]);
+
+
+        if (pase_insertado[i].id_pase == ERROR_SIGNAL) {
+            // clearConsole();
+            printf(ERROR_INSERTAR_PASE, pase[i].id_pase);
+            printf("Error al insertar el pase con ID: %d\n", pase[i].id_pase);
+            printf("sqlca: %s\n", sqlca.sqlerrm.sqlerrmc);
+            printf("sqlcode: %d\n", sqlca.sqlcode);
+            printf("sqlstate: %s\n", sqlca.sqlstate);
+            return;
+        }   
+        strncpy(pase_insertado[i].pase_parque.fecha_accesso, fecha_acceso, MAX_FECHA_LENGTH);
+        pase_insertado[i].pase_parque.id_parque = parqueSeleccionado.id_parque;
+        pase_insertado[i].pase_parque.id_pase = pase_insertado[i].id_pase;
+        pase_insertado[i].pase_parque.id_pase_parque = getMaxIdPaseParque() + 1;
+        pase_insertado[i].pase_parque.incluye_parking = (cantidad_vehiculos > 0) ? true : false;
+        pase_insertado[i].pase_parque.id_precio= precio.id_precio;
+        // Insertar el pase_parque en la base de datos
+        pase_parque_insertado[i] = insertarPaseParque(pase_insertado[i].pase_parque);
+        if (pase_parque_insertado[i].id_pase_parque == ERROR_SIGNAL) {
+            // clearConsole();
+            printf(ERROR_INSERTAR_PASE_PARQUE, pase_insertado[i].id_pase);
+            printf("Error al insertar el pase_parque con ID: %d\n", pase_insertado[i].pase_parque.id_pase_parque);
+            printf("sqlca: %s\n", sqlca.sqlerrm.sqlerrmc);
+            printf("sqlcode: %d\n", sqlca.sqlcode);
+            printf("sqlstate: %s\n", sqlca.sqlstate);
+            return;
+        }
+
+
+    }
+    //Mostrar  cada pase
+    //Imprimir la compra
+    printf(CHAR_IMPRIMIR_ASTERISCO);
+    printf(CHAR_MOSTRAR_COMPRA, 
+        compra_insertada.id_compra, 
+        compra_insertada.id_cliente, 
+        compra_insertada.fecha_compra, 
+        compra_insertada.hora_compra, 
+        precio_total, // precio pases
+        monto_final_iva - precio_total, // IVA
+        compra_insertada.monto_total, // total con IVA
+        compra_insertada.debito_credito, 
+        compra_insertada.numero_tarjeta, 
+        compra_insertada.fecha_vencimiento, 
+        compra_insertada.cvv, 
+        compra_insertada.cant_pases, 
+        compra_insertada.cant_vehiculos
+    );
+    printf(CHAR_IMPRIMIR_ASTERISCO);
+    for (int i = 0; i < cantidad_entradas; i++) {
         
+        printf(CHAR_IMPRIMIR_ASTERISCO);
         
-    // }
-    //END FOREACH
+        printf(CHAR_IMPRIMIR_PASES,
+            i + 1,
+            pase_insertado[i].id_pase,
+            pase_parque_insertado[i].id_pase_parque,
+            pase_insertado[i].id_visitante,
+            pase_insertado[i].id_compra,
+            pase_parque_insertado[i].id_parque,
+            pase_parque_insertado[i].id_precio,
+            pase_insertado[i].codigo_qr,
+            pase_parque_insertado[i].fecha_accesso,
+            pase_parque_insertado[i].incluye_parking ? "Sí" : "No",
+            pase_insertado[i].precio_total
+        );
+        printf(CHAR_PRECIO_TOTAL, precio_total);
+        if(cantidad_vehiculos > 0) {
 
-
-    printf("Venta registrada (simulada).\n");
+            PARKING parkingSeleccionado = getParking(parqueSeleccionado.id_parque);
+            printf(CHAR_COSTO_ADICIONAL_PARKING, parkingSeleccionado.costo_adicional);
+        } else {
+            printf(CHAR_NO_RESERVADO_PARKING);
+        }
+        
+        printf(CHAR_IMPRIMIR_ASTERISCO);
+    }
+    printf(CHAR_IMPRIMIR_ASTERISCO);
+    
+    return;
 }
 
 void validarEntradas() { 
@@ -606,5 +825,103 @@ void totalRecaudadoFecha(){
     printf(CHAR_IMPRIMIR_ASTERISCO);
     printf(CHAR_MONTO_TOTAL,monto_total);
     printf(CHAR_IMPRIMIR_ASTERISCO);
+    return;
+}
+
+void registrarCliente() {
+    clearConsole();
+    CLIENTE cliente;
+    //Pedir la ci del cliente
+    char ci_cliente[MAX_CI_LENGTH + 1];
+    do{
+        printf(CHAR_INGRESE_CI_CLIENTE, MAX_CI_LENGTH);
+        fgets(ci_cliente, sizeof(ci_cliente), stdin);
+        ci_cliente[strcspn(ci_cliente, "\n")] = '\0'; // Eliminar el salto de línea
+
+        if (strlen(ci_cliente) == 0 || strlen(ci_cliente) > MAX_CI_LENGTH) {
+            clearConsole();
+            printf(CHAR_CEDULA_INVALIDA, MAX_CI_LENGTH);
+            continue;
+        }
+
+        if (!esCedulaValida(ci_cliente)) {
+            clearConsole();
+            printf(CEDULA_INVALIDA_INTENTE_NUEVAMENTE);
+            continue;
+        }
+        
+        if (existeCliente(ci_cliente)) {
+            clearConsole();
+            printf(CHAR_CEDULA_EXISTE, ci_cliente);
+            return; // Si ya existe, no se registra
+        }
+    }while(!esCedulaValida(ci_cliente));
+
+
+    clearConsole();
+    strncpy(cliente.ci, ci_cliente, MAX_CI_LENGTH);
+
+    //Preguntar si existe el cliente
+    // Si no existe, se pide el nombre y correo
+    // Si existe, se muestra un mensaje y se sale de la función
+    if(existeCliente(ci_cliente)) {
+        clearConsole();
+        printf(CHAR_CLIENTE_EXISTE, ci_cliente);
+        return;
+    }
+
+    char nombre[MAX_NOMBRE_LENGTH + 1];
+    char correo[MAX_LENGTH + 1];
+    bool nombreValido = false;
+
+    
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    do {
+        printf(CHAR_INGRESE_NOMBRE_CLIENTE, MAX_NOMBRE_LENGTH);
+        fgets(nombre, sizeof(nombre), stdin);
+        nombre[strcspn(nombre, "\n")] = '\0';
+        if (!esNombreValido(nombre)) {
+            clearConsole();
+            printf(ERROR_NOMBRE_INVALIDO);
+            continue;
+        }
+        
+    } while (!esNombreValido(nombre));
+    
+    
+    strncpy(cliente.nombre, nombre, MAX_NOMBRE_LENGTH);
+    
+    // Pedir correo
+    clearConsole();
+    do {
+        printf(CHAR_INGRESE_CORREO_CLIENTE);
+        fgets(correo, sizeof(correo), stdin);
+        correo[strcspn(correo, "\n")] = '\0';
+        
+        if (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo)) {
+            clearConsole();
+            printf(CHAR_CORREO_INVALIDO);
+        }
+    } while (strlen(correo) == 0 || strlen(correo) > MAX_LENGTH || !esCorreoValido(correo));
+    strncpy(cliente.email, correo, MAX_LENGTH);
+
+    // Crear el cliente
+
+    CLIENTE nuevo_cliente=insertarCliente(cliente);
+    if(nuevo_cliente.id_cliente == ERROR_SIGNAL) {
+        clearConsole();
+        printf(ERROR_INSERTAR_CLIENTE, cliente.ci);
+        return;
+    }
+
+    printf(CHAR_CLIENTE_REGISTRADO, nuevo_cliente.id_cliente, nuevo_cliente.ci, nuevo_cliente.nombre, nuevo_cliente.email);
+
+}
+
+
+void limpiarBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
     return;
 }
