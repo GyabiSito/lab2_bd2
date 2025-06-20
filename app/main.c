@@ -837,7 +837,7 @@ void validarEntradas() {
     bool valido;
     
     do {
-        printf(CHAR_INGRESE_CEDULA);
+        printf(CHAR_INGRESE_CEDULA_VISITANTE);
         scanf("%s", cedula);
         while (getchar() != '\n'); // limpiar buffer
     
@@ -887,9 +887,8 @@ void validarEntradas() {
         printf(ERROR_VISITANTE_NO_ENCONTRADO,cedula);
         return;
     };
-    clearConsole();
     printf(CHAR_IMPRIMIR_ASTERISCO);
-    printf(CHAR_VISITANTE_ENCONTRADO, visitante.nombre, visitante.id_visitante);
+    printf(CHAR_VISITANTE_ENCONTRADO, visitante.nombre, visitante.ci);
     //Agarrar el total de pases que tiene ese visitante
     imprimirPasesVisitantePorFecha(visitante.id_visitante, mes, dia);
     printf(CHAR_IMPRIMIR_ASTERISCO);
@@ -909,7 +908,6 @@ void totalRecaudadoFecha(){
     
         if (resultado_dia != 1 || !esAnioValido(anio)) {
             clearConsole();
-            printf(ERROR_ANIO_INVALIDO); // mensaje para año inválido
         }
     } while (resultado_dia != 1 || !esAnioValido(anio));
     
